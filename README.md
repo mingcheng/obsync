@@ -10,6 +10,11 @@
 
 这个是个针对华为云对象存储服务（OBS）的目录同步工具，支持多线程同步本地的目录到 OBS 的 Bucket。
 
+### @TODO
+
+* 增加用例测试
+* 使用 Watch Directory 的方式监控文件变更并更新上传
+
 ## 编译
 
 由于使用了 golang mod，所以建议使用 golang 1.11 及以上版本进行编译。请参考 Makefile 即可，使用 `make build` 编译以及 `make install` 安装到 `$GOPATH/bin` 中。

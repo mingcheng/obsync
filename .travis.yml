@@ -1,0 +1,26 @@
+language: go
+
+os:
+  - linux
+  - darwin
+
+go:
+  - "1.12.x"
+
+env:
+  - GO111MODULE=on
+
+notifications:
+  email:
+    recipients:
+      - mingcheng@outlook.com
+    on_success: change # default: change
+    on_failure: always # default: always
+
+before_script:
+  - go version
+  - make clean
+
+script:
+  - make test
+  - make build

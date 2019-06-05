@@ -1,0 +1,14 @@
+[Unit]
+Description=Directory syncer for Huawei Cloud OBS
+After=network.target
+
+[Service]
+WorkingDirectory=/path/
+ExecStart=/path/to/exec
+
+[Install]
+WantedBy=multi-user.target
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
