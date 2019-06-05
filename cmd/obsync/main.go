@@ -120,6 +120,9 @@ func main() {
 		log.Printf("root path is %s\n", config.Root)
 	}
 
+	// start process
+	var wg sync.WaitGroup
+
 	// tasks for put files to bucket
 	tasks := make(chan *Obs, config.MaxThread)
 	defer close(tasks)
@@ -129,8 +132,7 @@ func main() {
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 	defer close(sig)
 
-	var wg sync.WaitGroup
-
+	// goroute for put files to obs
 	go func() {
 		var tab tabular.Table
 		type tabby struct {
@@ -184,6 +186,7 @@ func main() {
 		}
 	}()
 
+	// get all obs tasks and put
 	if obs, err := ObsTasks(config.Root); err != nil {
 		panic(err)
 	} else {
@@ -196,19 +199,20 @@ func main() {
 
 	}
 
+	// waiting for system signal or user interrupt
 	go func() {
-		done := false
-		for !done {
+		for {
 			select {
 			case <-sig:
-				done = true
 				if config.Debug {
 					log.Println("All is Done")
 				}
+				os.Exit(0)
 			}
 		}
 	}()
 
+	// waiting for all things done
 	wg.Wait()
 
 	// all is done

@@ -1,0 +1,10 @@
+{
+  "debug": false,
+  "force": false,
+  "root": ".",
+  "secret": "<secret>",
+  "key": "<key>",
+  "endpoint": "<endpoint>",
+  "bucket": "<bucket-name>",
+  "thread": 5
+}
