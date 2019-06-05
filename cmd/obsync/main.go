@@ -137,23 +137,22 @@ func main() {
 			Result string
 		}
 
-		init := func() {
+		tabHeader := func() {
 			tab = tabular.New()
-			tab.Col("source", "Source File", 80)
-			tab.ColRJ("size", "Size", 10)
+			tab.Col("source", "Source File", 30)
+			tab.ColRJ("size", "Size", 14)
 			tab.Col("remote", "Remote Key", 50)
-			tab.ColRJ("result", "Result", 10)
+			tab.ColRJ("result", "Result", 6)
 		}
 
-		init()
-
+		tabHeader()
 		format := tab.Print("*")
 
 		for {
 			select {
 			case obs := <-tasks:
 				tab := tabby{}
-				tab.Source = obs.SourceFile
+				tab.Source = filepath.Base(obs.SourceFile)
 				tab.Remote = obs.RemoteKey
 
 				if fi, err := os.Stat(obs.SourceFile); os.IsNotExist(err) {
