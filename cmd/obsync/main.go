@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/InVisionApp/tabular"
@@ -125,8 +126,10 @@ func main() {
 
 	// register system signal
 	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 	defer close(sig)
+
+	var wg sync.WaitGroup
 
 	go func() {
 		var tab tabular.Table
@@ -157,52 +160,57 @@ func main() {
 
 				if fi, err := os.Stat(obs.SourceFile); os.IsNotExist(err) {
 					tab.Result = "NOT EXISTS"
-					fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
-					return
 				} else {
 					tab.Size = fmt.Sprintf("%.2d", fi.Size())
-				}
 
-				if config.Force || !obs.Exists() {
-					if output, err := obs.Put(); err != nil {
-						tab.Result = "ERROR"
-					} else {
-						if output.StatusCode == http.StatusOK {
-							tab.Result = "OK"
+					if config.Force || !obs.Exists() {
+						if output, err := obs.Put(); err != nil {
+							tab.Result = "ERROR"
 						} else {
-							tab.Result = string(output.StatusCode)
+							if output.StatusCode == http.StatusOK {
+								tab.Result = "OK"
+							} else {
+								tab.Result = string(output.StatusCode)
+							}
 						}
+					} else {
+						tab.Result = "IGNORE"
 					}
-				} else {
-					tab.Result = "IGNORE"
 				}
 
+				wg.Done()
 				fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
 			}
 		}
 	}()
 
-	go func() {
-		if obs, err := ObsTasks(config.Root); err != nil {
-			panic(err)
-		} else {
-			for _, j := range obs {
-				tasks <- j
-			}
+	if obs, err := ObsTasks(config.Root); err != nil {
+		panic(err)
+	} else {
+		for _, j := range obs {
+			wg.Add(1)
+			go func(o *Obs) {
+				tasks <- o
+			}(j)
+		}
 
-			// all is done
-			sig <- syscall.SIGQUIT
+	}
+
+	go func() {
+		done := false
+		for !done {
+			select {
+			case <-sig:
+				done = true
+				if config.Debug {
+					log.Println("All is Done")
+				}
+			}
 		}
 	}()
 
-	done := false
-	for !done {
-		select {
-		case <-sig:
-			done = true
-			if config.Debug {
-				log.Println("All is Done")
-			}
-		}
-	}
+	wg.Wait()
+
+	// all is done
+	sig <- syscall.SIGQUIT
 }
