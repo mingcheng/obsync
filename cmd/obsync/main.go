@@ -157,32 +157,35 @@ func main() {
 		for {
 			select {
 			case obs := <-tasks:
-				tab := tabby{}
-				tab.Source = filepath.Base(obs.SourceFile)
-				tab.Remote = obs.RemoteKey
+				func() {
+					defer wg.Done()
 
-				if fi, err := os.Stat(obs.SourceFile); os.IsNotExist(err) {
-					tab.Result = "NOT EXISTS"
-				} else {
-					tab.Size = fmt.Sprintf("%.2d", fi.Size())
+					tab := tabby{}
+					tab.Source = filepath.Base(obs.SourceFile)
+					tab.Remote = obs.RemoteKey
 
-					if config.Force || !obs.Exists() {
-						if output, err := obs.Put(); err != nil {
-							tab.Result = "ERROR"
-						} else {
-							if output.StatusCode == http.StatusOK {
-								tab.Result = "OK"
-							} else {
-								tab.Result = string(output.StatusCode)
-							}
-						}
+					if fi, err := os.Stat(obs.SourceFile); os.IsNotExist(err) {
+						tab.Result = "NOT EXISTS"
 					} else {
-						tab.Result = "IGNORE"
-					}
-				}
+						tab.Size = fmt.Sprintf("%.2d", fi.Size())
 
-				fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
-				wg.Done()
+						if config.Force || !obs.Exists() {
+							if output, err := obs.Put(); err != nil {
+								tab.Result = "ERROR"
+							} else {
+								if output.StatusCode == http.StatusOK {
+									tab.Result = "OK"
+								} else {
+									tab.Result = string(output.StatusCode)
+								}
+							}
+						} else {
+							tab.Result = "IGNORE"
+						}
+					}
+
+					fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
+				}()
 			}
 		}
 	}()
