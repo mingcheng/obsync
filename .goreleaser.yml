@@ -2,28 +2,28 @@ dist: ./target
 project_name: obsync
 before:
   hooks:
-    # you may remove this if you don't use vgo
-    - go mod download
-    - make build
+    - make clean
 builds:
-- binary: ./target/obsync
-- env:
-  - CGO_ENABLED=0
+  - main: ./cmd/obsync
+  - binary: obsync
+  - env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
 archives:
-- format: zip
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
+  - format: zip
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+      - "^docs:"
+      - "^test:"

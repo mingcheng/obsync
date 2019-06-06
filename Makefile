@@ -11,7 +11,7 @@ SRC=./cmd/obsync
 BINARY=$(TARGET)/obsync
 
 GO_ENV=CGO_ENABLED=0
-GO_FLAGS=-ldflags="-X main.version=$(VERSION) -X 'main.buildTime=`date`'"
+GO_FLAGS=-ldflags="-X main.version=$(VERSION) -X 'main.commit=`git rev-parse HEAD`' -X 'main.date=`date`'"
 GO=env $(GO_ENV) $(GOROOT)/bin/go
 
 PACKAGES=`go list ./... | grep -v /vendor/`

@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	version        = ""
-	buildTime      = ""
+	version        = "dev"
+	commit         = "none"
+	date           = "unkown"
 	config         = &util.Config{}
 	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
@@ -27,7 +28,7 @@ var (
 
 // print version and build time, then exit
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "version: %s, %s\n", version, buildTime)
+	_, _ = fmt.Fprintf(os.Stderr, "v%v, commit %v, built at %v\n", version, commit, date)
 }
 
 // get bucket info, usage and number of files
