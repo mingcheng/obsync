@@ -1,26 +1,35 @@
-dist: ./target
 project_name: obsync
+dist: ./target
 before:
   hooks:
     - make clean
 builds:
   - main: ./cmd/obsync
-  - binary: obsync
-  - env:
+    binary: obsync
+    env:
       - CGO_ENABLED=0
       - GO111MODULE=on
+    goos:
+      - freebsd
+      - linux
+      - darwin
+      - windows
+    ignore:
+      - goarch: 386
 archives:
   - format: zip
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
+    #   darwin: Darwin
+    #   linux: Linux
+    #   freebsd: FreeBSD
+    #   windows: Windows
+    #   386: i386
       amd64: x86_64
 checksum:
   name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ .Tag }}-snapshot"
 changelog:
   sort: asc
   filters:
