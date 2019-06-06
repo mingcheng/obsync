@@ -1,14 +1,10 @@
 [Unit]
-Description=Directory syncer for Huawei Cloud OBS
+Description=Sync local directory to Huawei Cloud OBS
 After=network.target
 
 [Service]
-WorkingDirectory=/path/
-ExecStart=/path/to/exec
+Type=oneshot
+ExecStart=/usr/local/bin/obsync -f /etc/obsync.json
 
 [Install]
-WantedBy=multi-user.target
-
-[Timer]
-OnCalendar=hourly
-Persistent=true
+WantedBy=multi-user.target,timer.target

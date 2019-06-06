@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync local directory to Huawei Cloud OBS hourly
+After=network.target
+
+[Install]
+WantedBy=multi-user.target,timer.target
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=obsync.service

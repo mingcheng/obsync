@@ -49,7 +49,8 @@
 
 ### 使用 systemd
 
-使用 systemd 可以非常方便得在 Linux 系统下管理应用的启动方式。参考文件 `obsync.service` 文件，默认每一个小时重启（扫描一次）应用。
+使用 systemd 可以非常方便得在 Linux 系统下管理应用的启动方式。参考文件 `obsync.service` 以及 `obsync.timer` 文件，默认每一个小时重启（扫描一次）应用。
 
+基于用户运行的方式安装，则拷贝上述对应的两个文件到 `$HOME/.config/systemd/user`，同时注意执行文件以及配置文件的路径。然后，刷新 `systemctl --user daemon-reload` 后执行 `systemctl --user start obsync.timer` 即可运行。如想自动启动，则运行 `systemctl --user enable obsync.timer` 即可。
 
 `- eof -`
