@@ -34,10 +34,14 @@ test:
 install: build
 	@$(GO) install $(GO_FLAGS) -tags=jsoniter $(SRC)
 
+release:
+	@goreleaser --rm-dist
+
 docker_image: clean
 	@docker build -f ./Dockerfile -t obsync:$(VERSION) .
 
 clean:
 	@$(GO) clean ./...
+	@rm -rf ./target/*
 
 .PHONY: fmt install test clean target docker_image
