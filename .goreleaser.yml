@@ -17,15 +17,21 @@ builds:
     ignore:
       - goarch: 386
 archives:
-  - format: zip
+  - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     replacements:
-    #   darwin: Darwin
-    #   linux: Linux
-    #   freebsd: FreeBSD
-    #   windows: Windows
-    #   386: i386
-      amd64: x86_64
+      darwin: macOS
+      linux: Tux
+      freebsd: FreeBSD
+      windows: Windows
+      386: 32-bit
+      amd64: 64-bit
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
 checksum:
   name_template: "checksums.txt"
 snapshot:

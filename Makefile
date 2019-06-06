@@ -34,6 +34,9 @@ test:
 install: build
 	@$(GO) install $(GO_FLAGS) -tags=jsoniter $(SRC)
 
+dist: clean
+	@goreleaser  --skip-publish --rm-dist --snapshot
+
 release:
 	@goreleaser --rm-dist
 
@@ -44,4 +47,4 @@ clean:
 	@$(GO) clean ./...
 	@rm -rf ./target/*
 
-.PHONY: fmt install test clean target docker_image
+.PHONY: fmt install test clean target docker_image dist release
