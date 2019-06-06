@@ -16,6 +16,11 @@ import (
 	"github.com/mingcheng/obsync.go/util"
 )
 
+const logo = `
+/~\|~)(~\/|\ ||~
+\_/|_)_)/ | \||_
+`
+
 var (
 	version        = "dev"
 	commit         = "none"
@@ -28,7 +33,7 @@ var (
 
 // print version and build time, then exit
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "v%v, commit %v, built at %v\n", version, commit, date)
+	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v, built at %v\n%v\n\n", version, date, commit)
 }
 
 // get bucket info, usage and number of files
@@ -76,6 +81,7 @@ func ObsTasks(root string) (tasks []*Obs, err error) {
 
 func main() {
 	flag.Usage = func() {
+		fmt.Println(logo)
 		PrintVersion()
 		flag.PrintDefaults()
 	}
