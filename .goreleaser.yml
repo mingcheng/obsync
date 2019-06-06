@@ -1,3 +1,4 @@
+dist: ./target
 project_name: obsync
 before:
   hooks:
