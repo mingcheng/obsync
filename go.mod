@@ -1,4 +1,4 @@
-module github.com/mingcheng/obs-sync.go
+module github.com/mingcheng/obsync.go
 
 go 1.12
 

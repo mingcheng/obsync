@@ -8,7 +8,7 @@
 
 ## 概述
 
-这个是个针对华为云对象存储服务（OBS）的目录同步工具，支持多线程同步本地的目录到 OBS 的 Bucket。
+这个是个针对华为云对象存储服务（OBS）的目录同步工具，支持多线程同步本地的目录到 OBS 的 Bucket。如果您想使用官方的更丰富功能的工具，可以参考 https://support.huaweicloud.com/tg-obs/obs_09_0001.html
 
 ### @TODO
 
@@ -46,5 +46,10 @@
   -i    print bucket info and exit
   -v    print version and exit
 ```
+
+### 使用 systemd
+
+使用 systemd 可以非常方便得在 Linux 系统下管理应用的启动方式。参考文件 `obsync.service` 文件，默认每一个小时重启（扫描一次）应用。
+
 
 `- eof -`

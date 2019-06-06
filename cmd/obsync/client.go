@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/mingcheng/obs-sync.go/obs"
+	"github.com/mingcheng/obsync.go/obs"
 )
 
 var client *obs.ObsClient

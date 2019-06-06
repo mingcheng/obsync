@@ -13,7 +13,7 @@ import (
 	"syscall"
 
 	"github.com/InVisionApp/tabular"
-	"github.com/mingcheng/obs-sync.go/util"
+	"github.com/mingcheng/obsync.go/util"
 )
 
 var (
@@ -90,19 +90,19 @@ func main() {
 	// detect config file path
 	configFilePath, _ := filepath.Abs(*configFilePath)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		panic("configure file not exists")
+		log.Fatalf("configure file %s is not exists\n", configFilePath)
 	}
 
 	// read config and initial obs client
 	if err := config.Read(configFilePath); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	} else {
 		Client(config.Key, config.Secret, config.EndPoint)
 	}
 
 	if *printInfo {
 		if info, err := BucketInfo(); err != nil {
-			panic(err)
+			log.Fatalln(err)
 		} else {
 			if config.Debug {
 				_, _ = fmt.Fprintln(os.Stderr, config)
@@ -115,7 +115,7 @@ func main() {
 	// detect root directory
 	config.Root, _ = filepath.Abs(config.Root)
 	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		panic("config root it not exits or not a directory")
+		log.Fatalf("config root %s is not exits or not a directory\n", config.Root)
 	} else if config.Debug {
 		log.Printf("root path is %s\n", config.Root)
 	}
@@ -180,23 +180,22 @@ func main() {
 					}
 				}
 
-				wg.Done()
 				fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
+				wg.Done()
 			}
 		}
 	}()
 
 	// get all obs tasks and put
 	if obs, err := ObsTasks(config.Root); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	} else {
-		for _, j := range obs {
-			wg.Add(1)
-			go func(o *Obs) {
-				tasks <- o
-			}(j)
-		}
-
+		wg.Add(len(obs))
+		go func() {
+			for _, j := range obs {
+				tasks <- j
+			}
+		}()
 	}
 
 	// waiting for system signal or user interrupt
@@ -207,12 +206,13 @@ func main() {
 				if config.Debug {
 					log.Println("All is Done")
 				}
+
 				os.Exit(0)
 			}
 		}
 	}()
 
-	// waiting for all things done
+	// block, waiting for all things done
 	wg.Wait()
 
 	// all is done

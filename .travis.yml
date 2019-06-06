@@ -2,7 +2,7 @@ language: go
 
 os:
   - linux
-  - darwin
+  - osx
 
 go:
   - "1.12.x"
