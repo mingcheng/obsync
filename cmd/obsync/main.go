@@ -4,15 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 
-	"github.com/InVisionApp/tabular"
 	"github.com/mingcheng/obsync.go/util"
 )
 
@@ -74,7 +71,7 @@ func ObsTasks(root string) (tasks []*Obs, err error) {
 	}
 
 	if config.Debug {
-		log.Printf("size of obs taks is %d\n", len(obs))
+		log.Printf("size of obs tasks is %d\n", len(obs))
 	}
 	return obs, nil
 }
@@ -127,104 +124,26 @@ func main() {
 		log.Printf("root path is %s\n", config.Root)
 	}
 
-	// start process
-	var wg sync.WaitGroup
-
-	// tasks for put files to bucket
-	tasks := make(chan *Obs, config.MaxThread)
-	defer close(tasks)
+	// get all obs tasks and put
+	if obs, err := ObsTasks(config.Root); err != nil {
+		log.Fatalln(err)
+	} else {
+		syncTask := NewTask(config.MaxThread, obs)
+		defer syncTask.Done()
+		go syncTask.Run()
+	}
 
 	// register system signal
 	sig := make(chan os.Signal)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 	defer close(sig)
 
-	// goroute for put files to obs
-	go func() {
-		var tab tabular.Table
-		type tabby struct {
-			Source string
-			Size   string
-			Remote string
-			Result string
-		}
-
-		tabHeader := func() {
-			tab = tabular.New()
-			tab.Col("source", "Source File", 30)
-			tab.ColRJ("size", "Size", 14)
-			tab.Col("remote", "Remote Key", 50)
-			tab.ColRJ("result", "Result", 6)
-		}
-
-		tabHeader()
-		format := tab.Print("*")
-
-		for {
-			select {
-			case obs := <-tasks:
-				func() {
-					defer wg.Done()
-
-					tab := tabby{}
-					tab.Source = filepath.Base(obs.SourceFile)
-					tab.Remote = obs.RemoteKey
-
-					if fi, err := os.Stat(obs.SourceFile); os.IsNotExist(err) {
-						tab.Result = "NOT EXISTS"
-					} else {
-						tab.Size = fmt.Sprintf("%.2d", fi.Size())
-
-						if config.Force || !obs.Exists() {
-							if output, err := obs.Put(); err != nil {
-								tab.Result = "ERROR"
-							} else {
-								if output.StatusCode == http.StatusOK {
-									tab.Result = "OK"
-								} else {
-									tab.Result = string(output.StatusCode)
-								}
-							}
-						} else {
-							tab.Result = "IGNORE"
-						}
-					}
-
-					fmt.Printf(format, tab.Source, tab.Size, tab.Remote, tab.Result)
-				}()
-			}
-		}
-	}()
-
-	// get all obs tasks and put
-	if obs, err := ObsTasks(config.Root); err != nil {
-		log.Fatalln(err)
-	} else {
-		wg.Add(len(obs))
-		go func() {
-			for _, j := range obs {
-				tasks <- j
-			}
-		}()
-	}
-
 	// waiting for system signal or user interrupt
-	go func() {
-		for {
-			select {
-			case <-sig:
-				if config.Debug {
-					log.Println("All is Done")
-				}
-
-				os.Exit(0)
-			}
+	for range sig {
+		if config.Debug {
+			log.Println("All is Done")
 		}
-	}()
 
-	// block, waiting for all things done
-	wg.Wait()
-
-	// all is done
-	sig <- syscall.SIGQUIT
+		return
+	}
 }
