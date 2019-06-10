@@ -128,9 +128,13 @@ func main() {
 	if obs, err := ObsTasks(config.Root); err != nil {
 		log.Fatalln(err)
 	} else {
-		syncTask := NewTask(config.MaxThread, obs)
-		defer syncTask.Done()
-		go syncTask.Run()
+		if len(obs) > 0 {
+			syncTask := NewTask(config.MaxThread, obs)
+			defer syncTask.Done()
+			go syncTask.Run()
+		} else {
+			log.Fatalln("obs list is empty")
+		}
 	}
 
 	// register system signal

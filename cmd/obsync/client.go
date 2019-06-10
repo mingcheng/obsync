@@ -28,7 +28,7 @@ type Obs struct {
 func NewClient(ak, sk, endpoint string, timeout int) *obs.ObsClient {
 	once.Do(func() {
 		var err error
-		client, err = obs.New(ak, sk, endpoint, obs.WithSocketTimeout(timeout))
+		client, err = obs.New(ak, sk, endpoint, obs.WithSocketTimeout(timeout), obs.WithConnectTimeout(timeout))
 		if err != nil {
 			panic(err)
 		}
