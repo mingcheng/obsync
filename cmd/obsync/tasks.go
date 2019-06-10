@@ -71,6 +71,7 @@ func (t *Task) sync(obs *Obs) {
 				tab.Result = "OK"
 			} else {
 				if output, err := obs.Put(); err != nil {
+					log.Println(err)
 					tab.Result = "ERROR"
 				} else {
 					if output.StatusCode == http.StatusOK {
