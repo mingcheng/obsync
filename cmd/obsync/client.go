@@ -25,10 +25,10 @@ type Obs struct {
 }
 
 // @see http://marcio.io/2015/07/singleton-pattern-in-go/
-func Client(ak, sk, endpoint string) *obs.ObsClient {
+func NewClient(ak, sk, endpoint string, timeout uint) *obs.ObsClient {
 	once.Do(func() {
 		var err error
-		client, err = obs.New(ak, sk, endpoint)
+		client, err = obs.New(ak, sk, endpoint, obs.WithConnectTimeout(int(timeout)))
 		if err != nil {
 			panic(err)
 		}

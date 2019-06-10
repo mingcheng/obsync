@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
 	"time"
 )
 
@@ -19,9 +18,8 @@ type tabby struct {
 }
 
 type Task struct {
-	waitGroup *sync.WaitGroup
-	execChan  chan bool
-	ObsTasks  []*Obs
+	execChan chan bool
+	ObsTasks []*Obs
 }
 
 func NewTask(size uint, tasks []*Obs) *Task {
@@ -30,9 +28,8 @@ func NewTask(size uint, tasks []*Obs) *Task {
 	}
 
 	return &Task{
-		waitGroup: &sync.WaitGroup{},
-		execChan:  make(chan bool, size),
-		ObsTasks:  tasks,
+		execChan: make(chan bool, size),
+		ObsTasks: tasks,
 	}
 }
 
@@ -68,8 +65,8 @@ func (t *Task) sync(obs *Obs) {
 		tab.Size = fmt.Sprintf("%.2d", fi.Size())
 
 		if config.Force || !obs.Exists() {
-
 			if config.Debug {
+				// NOTICE: only for test, do not actually upload
 				time.Sleep(2 * time.Second)
 				tab.Result = "OK"
 			} else {

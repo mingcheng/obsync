@@ -24,8 +24,8 @@ archives:
       linux: Tux
       freebsd: FreeBSD
       windows: Windows
-      386: 32-bit
-      amd64: 64-bit
+      386: i386
+      amd64: x64
     format_overrides:
       - goos: windows
         format: zip
