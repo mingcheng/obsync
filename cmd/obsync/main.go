@@ -102,6 +102,18 @@ func main() {
 	if err := config.Read(configFilePath); err != nil {
 		log.Fatalln(err)
 	} else {
+		if len(config.Key) <= 0 {
+			config.Key = os.Getenv("OBS_KEY")
+		}
+
+		if len(config.Secret) <= 0 {
+			config.Secret = os.Getenv("OBS_SECRET")
+		}
+
+		if config.Debug {
+			log.Println(config)
+		}
+
 		NewClient(config.Key, config.Secret, config.EndPoint, int(config.Timeout))
 	}
 
@@ -142,7 +154,7 @@ func main() {
 				for s := range sig {
 					switch s {
 					default:
-						log.Println("caught signal stopping all tasks")
+						log.Println("caught signal, stopping all tasks")
 						cancel()
 					}
 				}
