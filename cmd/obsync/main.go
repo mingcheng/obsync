@@ -142,8 +142,8 @@ func main() {
 				for s := range sig {
 					switch s {
 					default:
+						log.Println("caught signal stopping all tasks")
 						cancel()
-						log.Println("all is done")
 					}
 				}
 			}()
