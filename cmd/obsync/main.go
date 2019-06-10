@@ -101,7 +101,7 @@ func main() {
 	if err := config.Read(configFilePath); err != nil {
 		log.Fatalln(err)
 	} else {
-		Client(config.Key, config.Secret, config.EndPoint)
+		NewClient(config.Key, config.Secret, config.EndPoint, config.Timeout)
 	}
 
 	if *printInfo {

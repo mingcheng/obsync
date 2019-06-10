@@ -15,6 +15,7 @@ type Config struct {
 	MaxThread uint   `json:"thread"`
 	Force     bool   `json:"force"`
 	Root      string `json:"root"`
+	Timeout   uint   `json:"timeout"`
 }
 
 func (c *Config) Read(path string) error {
