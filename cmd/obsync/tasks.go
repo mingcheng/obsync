@@ -65,9 +65,8 @@ func (t *Task) sync(obs *Obs) {
 		tab.Size = fmt.Sprintf("%.2d", fi.Size())
 
 		if config.Force || !obs.Exists() {
-
 			if config.Debug {
-				// only for test
+				// NOTICE: only for test, do not actually upload
 				time.Sleep(2 * time.Second)
 				tab.Result = "OK"
 			} else {
