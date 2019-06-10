@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type tabby struct {
 }
 
 type Task struct {
+	wg       sync.WaitGroup
 	ctx      context.Context
 	execChan chan bool
 	ObsTasks []*Obs
@@ -37,6 +39,8 @@ func NewTask(ctx context.Context, size uint, tasks []*Obs) *Task {
 }
 
 func (t *Task) Run() {
+	t.wg.Add(len(t.ObsTasks))
+
 	for _, j := range t.ObsTasks {
 		if config.Debug {
 			log.Printf("number of goroutine is %d", runtime.NumGoroutine())
@@ -51,10 +55,13 @@ func (t *Task) Run() {
 			go t.sync(j)
 		}
 	}
+
+	t.wg.Wait()
 }
 
 func (t *Task) sync(obs *Obs) {
 	defer func() {
+		t.wg.Done()
 		<-t.execChan
 	}()
 
