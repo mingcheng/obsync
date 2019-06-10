@@ -6,5 +6,6 @@
   "key": "<key>",
   "endpoint": "<endpoint>",
   "bucket": "<bucket-name>",
+  "timeout": 30,
   "thread": 5
 }
