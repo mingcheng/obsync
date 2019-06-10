@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,11 +19,12 @@ type tabby struct {
 }
 
 type Task struct {
+	ctx      context.Context
 	execChan chan bool
 	ObsTasks []*Obs
 }
 
-func NewTask(size uint, tasks []*Obs) *Task {
+func NewTask(ctx context.Context, size uint, tasks []*Obs) *Task {
 	if config.Debug {
 		log.Printf("thread number is %v", size)
 	}
@@ -30,6 +32,7 @@ func NewTask(size uint, tasks []*Obs) *Task {
 	return &Task{
 		execChan: make(chan bool, size),
 		ObsTasks: tasks,
+		ctx:      ctx,
 	}
 }
 
@@ -38,16 +41,16 @@ func (t *Task) Run() {
 		if config.Debug {
 			log.Printf("number of goroutine is %d", runtime.NumGoroutine())
 		}
-		t.execChan <- true
-		go t.sync(j)
-	}
-}
 
-func (t *Task) Done() {
-	if config.Debug {
-		log.Println("stop all running task")
+		select {
+		case <-t.ctx.Done():
+			close(t.execChan)
+			return
+
+		case t.execChan <- true:
+			go t.sync(j)
+		}
 	}
-	close(t.execChan)
 }
 
 func (t *Task) sync(obs *Obs) {

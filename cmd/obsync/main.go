@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -129,25 +130,28 @@ func main() {
 		log.Fatalln(err)
 	} else {
 		if len(obs) > 0 {
-			syncTask := NewTask(config.MaxThread, obs)
-			defer syncTask.Done()
-			go syncTask.Run()
+			ctx, cancel := context.WithCancel(context.TODO())
+			syncTask := NewTask(ctx, config.MaxThread, obs)
+
+			// waiting for system s or user interrupt
+			go func() {
+				// register system signal
+				sig := make(chan os.Signal)
+				signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
+
+				for s := range sig {
+					switch s {
+					default:
+						cancel()
+						log.Println("all is done")
+					}
+				}
+			}()
+
+			// running sync task
+			syncTask.Run()
 		} else {
 			log.Fatalln("obs list is empty")
 		}
-	}
-
-	// register system signal
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-	defer close(sig)
-
-	// waiting for system signal or user interrupt
-	for range sig {
-		if config.Debug {
-			log.Println("All is Done")
-		}
-
-		return
 	}
 }
