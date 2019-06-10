@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -18,11 +20,13 @@ type tabby struct {
 }
 
 type Task struct {
+	wg       sync.WaitGroup
+	ctx      context.Context
 	execChan chan bool
 	ObsTasks []*Obs
 }
 
-func NewTask(size uint, tasks []*Obs) *Task {
+func NewTask(ctx context.Context, size uint, tasks []*Obs) *Task {
 	if config.Debug {
 		log.Printf("thread number is %v", size)
 	}
@@ -30,28 +34,34 @@ func NewTask(size uint, tasks []*Obs) *Task {
 	return &Task{
 		execChan: make(chan bool, size),
 		ObsTasks: tasks,
+		ctx:      ctx,
 	}
 }
 
 func (t *Task) Run() {
+	t.wg.Add(len(t.ObsTasks))
+
 	for _, j := range t.ObsTasks {
 		if config.Debug {
 			log.Printf("number of goroutine is %d", runtime.NumGoroutine())
 		}
-		t.execChan <- true
-		go t.sync(j)
-	}
-}
 
-func (t *Task) Done() {
-	if config.Debug {
-		log.Println("stop all running task")
+		select {
+		case <-t.ctx.Done():
+			close(t.execChan)
+			return
+
+		case t.execChan <- true:
+			go t.sync(j)
+		}
 	}
-	close(t.execChan)
+
+	t.wg.Wait()
 }
 
 func (t *Task) sync(obs *Obs) {
 	defer func() {
+		t.wg.Done()
 		<-t.execChan
 	}()
 
@@ -71,6 +81,7 @@ func (t *Task) sync(obs *Obs) {
 				tab.Result = "OK"
 			} else {
 				if output, err := obs.Put(); err != nil {
+					log.Println(err)
 					tab.Result = "ERROR"
 				} else {
 					if output.StatusCode == http.StatusOK {

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/mingcheng/obsync.go/util"
@@ -31,49 +31,6 @@ var (
 // print version and build time, then exit
 func PrintVersion() {
 	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v, built at %v\n%v\n\n", version, date, commit)
-}
-
-// get bucket info, usage and number of files
-func BucketInfo() (info string, err error) {
-	obs := &Obs{
-		BucketName: config.Bucket,
-	}
-
-	if info, err := obs.Info(); err != nil {
-		return "", err
-	} else {
-		return fmt.Sprintf("size %d Kb, %d files", info.Size/1024.0, info.ObjectNumber), nil
-	}
-}
-
-// get obs tasks by directory, ignore "." prefix files
-func ObsTasks(root string) (tasks []*Obs, err error) {
-	var obs []*Obs
-
-	if e := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		// skip directories and dot prefix files
-		if !info.IsDir() && strings.HasPrefix(path, root) && !strings.HasPrefix(info.Name(), ".") {
-			key := path[len(root)+1:]
-			if !strings.HasPrefix(key, ".") {
-				tmp := &Obs{
-					SourceFile: path,
-					RemoteKey:  key,
-					BucketName: config.Bucket,
-				}
-
-				obs = append(obs, tmp)
-			}
-		}
-
-		return nil
-	}); e != nil {
-		return obs, e
-	}
-
-	if config.Debug {
-		log.Printf("size of obs tasks is %d\n", len(obs))
-	}
-	return obs, nil
 }
 
 func main() {
@@ -101,7 +58,19 @@ func main() {
 	if err := config.Read(configFilePath); err != nil {
 		log.Fatalln(err)
 	} else {
-		NewClient(config.Key, config.Secret, config.EndPoint, config.Timeout)
+		if len(config.Key) <= 0 {
+			config.Key = os.Getenv("OBS_KEY")
+		}
+
+		if len(config.Secret) <= 0 {
+			config.Secret = os.Getenv("OBS_SECRET")
+		}
+
+		if config.Debug {
+			log.Println(config)
+		}
+
+		NewClient(config.Key, config.Secret, config.EndPoint, int(config.Timeout))
 	}
 
 	if *printInfo {
@@ -128,22 +97,29 @@ func main() {
 	if obs, err := ObsTasks(config.Root); err != nil {
 		log.Fatalln(err)
 	} else {
-		syncTask := NewTask(config.MaxThread, obs)
-		defer syncTask.Done()
-		go syncTask.Run()
-	}
+		if len(obs) > 0 {
+			ctx, cancel := context.WithCancel(context.TODO())
+			syncTask := NewTask(ctx, config.MaxThread, obs)
 
-	// register system signal
-	sig := make(chan os.Signal)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-	defer close(sig)
+			// waiting for system s or user interrupt
+			go func() {
+				// register system signal
+				sig := make(chan os.Signal)
+				signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 
-	// waiting for system signal or user interrupt
-	for range sig {
-		if config.Debug {
-			log.Println("All is Done")
+				for s := range sig {
+					switch s {
+					default:
+						log.Println("caught signal, stopping all tasks")
+						cancel()
+					}
+				}
+			}()
+
+			// running sync task
+			syncTask.Run()
+		} else {
+			log.Fatalln("obs list is empty")
 		}
-
-		return
 	}
 }
