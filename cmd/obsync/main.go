@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/mingcheng/obsync.go/util"
+	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -21,9 +22,10 @@ const logo = `
 var (
 	version        = "dev"
 	commit         = "none"
-	date           = "unkown"
+	date           = "unknown"
 	config         = &util.Config{}
 	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
+	pidFilePath    = flag.String("pid", "/var/run/obsync.pid", "pid file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
 )
@@ -34,6 +36,7 @@ func PrintVersion() {
 }
 
 func main() {
+
 	flag.Usage = func() {
 		fmt.Println(logo)
 		PrintVersion()
@@ -46,6 +49,16 @@ func main() {
 	if *printVersion {
 		flag.Usage()
 		return
+	}
+
+	// detect pid file exists
+	if pid, err := pidfile.New(*pidFilePath); err != nil {
+		log.Panic(err)
+	} else {
+		if config.Debug {
+			log.Println(pid)
+		}
+		defer pid.Remove()
 	}
 
 	// detect config file path
