@@ -105,7 +105,7 @@ func main() {
 	// detect root directory
 	config.Root, _ = filepath.Abs(config.Root)
 	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		log.Println("config root %s is not exits or not a directory\n", config.Root)
+		log.Printf("config root %s, is not exits or not a directory\n", config.Root)
 		return
 	} else if config.Debug {
 		log.Printf("root path is %s\n", config.Root)
