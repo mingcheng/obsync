@@ -46,19 +46,21 @@ func main() {
 	// parse command line
 	flag.Parse()
 
+	// detect pid file exists
+	pid, err := pidfile.New(*pidFilePath)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer pid.Remove()
+
 	if *printVersion {
 		flag.Usage()
 		return
 	}
 
-	// detect pid file exists
-	if pid, err := pidfile.New(*pidFilePath); err != nil {
-		log.Panic(err)
-	} else {
-		if config.Debug {
-			log.Println(pid)
-		}
-		defer pid.Remove()
+	if config.Debug {
+		log.Println(pid)
 	}
 
 	// detect config file path
@@ -69,7 +71,8 @@ func main() {
 
 	// read config and initial obs client
 	if err := config.Read(configFilePath); err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return
 	} else {
 		if len(config.Key) <= 0 {
 			config.Key = os.Getenv("OBS_KEY")
@@ -88,27 +91,29 @@ func main() {
 
 	if *printInfo {
 		if info, err := BucketInfo(); err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		} else {
 			if config.Debug {
 				_, _ = fmt.Fprintln(os.Stderr, config)
 			}
 			_, _ = fmt.Fprintf(os.Stderr, "%s: %s\n", config.Bucket, info)
-			os.Exit(0)
 		}
+
+		return
 	}
 
 	// detect root directory
 	config.Root, _ = filepath.Abs(config.Root)
 	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		log.Fatalf("config root %s is not exits or not a directory\n", config.Root)
+		log.Println("config root %s is not exits or not a directory\n", config.Root)
+		return
 	} else if config.Debug {
 		log.Printf("root path is %s\n", config.Root)
 	}
 
 	// get all obs tasks and put
 	if obs, err := ObsTasks(config.Root); err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	} else {
 		if len(obs) > 0 {
 			ctx, cancel := context.WithCancel(context.TODO())
@@ -132,7 +137,7 @@ func main() {
 			// running sync task
 			syncTask.Run()
 		} else {
-			log.Fatalln("obs list is empty")
+			log.Println("obs list is empty")
 		}
 	}
 }
