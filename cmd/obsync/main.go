@@ -36,7 +36,7 @@ func PrintVersion() {
 }
 
 func main() {
-
+	// show command line usage information
 	flag.Usage = func() {
 		fmt.Println(logo)
 		PrintVersion()
@@ -46,21 +46,21 @@ func main() {
 	// parse command line
 	flag.Parse()
 
-	// detect pid file exists
-	pid, err := pidfile.New(*pidFilePath)
-	if err != nil {
+	// detect pid file exists, and generate pid file
+	if pid, err := pidfile.New(*pidFilePath); err != nil {
 		log.Println(err)
 		return
+	} else {
+		defer pid.Remove()
+		if config.Debug {
+			log.Println(pid)
+		}
 	}
-	defer pid.Remove()
 
+	// print version and exit
 	if *printVersion {
 		flag.Usage()
 		return
-	}
-
-	if config.Debug {
-		log.Println(pid)
 	}
 
 	// detect config file path
