@@ -36,6 +36,7 @@ func PrintVersion() {
 }
 
 func main() {
+	// show command line usage information
 	flag.Usage = func() {
 		fmt.Println(logo)
 		PrintVersion()
@@ -45,21 +46,22 @@ func main() {
 	// parse command line
 	flag.Parse()
 
-	// detect pid file exists
+	// detect pid file exists, and generate pid file
 	pid, err := pidfile.New(*pidFilePath)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer pid.Remove()
 
+	defer pid.Remove()
+	if config.Debug {
+		log.Println(pid)
+	}
+
+	// print version and exit
 	if *printVersion {
 		flag.Usage()
 		return
-	}
-
-	if config.Debug {
-		log.Println(pid)
 	}
 
 	// detect config file path
@@ -69,8 +71,7 @@ func main() {
 	}
 
 	// read config and initial obs client
-	err = config.Read(configFilePath)
-	if err != nil {
+	if err := config.Read(configFilePath); err != nil {
 		log.Println(err)
 		return
 	}
@@ -106,7 +107,7 @@ func main() {
 	// detect root directory
 	config.Root, _ = filepath.Abs(config.Root)
 	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		log.Printf("config root %s is not exits or not a directory\n", config.Root)
+		log.Printf("config root %s, is not exits or not a directory\n", config.Root)
 		return
 	} else if config.Debug {
 		log.Printf("root path is %s\n", config.Root)
