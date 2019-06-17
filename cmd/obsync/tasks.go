@@ -3,10 +3,11 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Thursday, June 13th 2019, 4:08:07 pm
- * Last Modified: Monday, June 17th 2019, 3:49:30 pm
+ * Last Modified: Monday, June 17th 2019, 3:53:00 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
+
 package main
 
 import (
@@ -28,6 +29,7 @@ type tabby struct {
 	Result string
 }
 
+// Task struct contrains task information
 type Task struct {
 	wg       sync.WaitGroup
 	ctx      context.Context
@@ -35,6 +37,7 @@ type Task struct {
 	ObsTasks []*Obs
 }
 
+// NewTask provides new task
 func NewTask(ctx context.Context, size uint, tasks []*Obs) *Task {
 	if config.Debug {
 		log.Printf("thread number is %v", size)
@@ -47,6 +50,7 @@ func NewTask(ctx context.Context, size uint, tasks []*Obs) *Task {
 	}
 }
 
+// Run a task
 func (t *Task) Run() {
 	t.wg.Add(len(t.ObsTasks))
 
