@@ -30,13 +30,12 @@ var (
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
 )
 
-// print version and build time, then exit
+// PrintVersion that print version and build time
 func PrintVersion() {
 	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v, built at %v\n%v\n\n", version, date, commit)
 }
 
 func main() {
-
 	flag.Usage = func() {
 		fmt.Println(logo)
 		PrintVersion()
@@ -70,24 +69,26 @@ func main() {
 	}
 
 	// read config and initial obs client
-	if err := config.Read(configFilePath); err != nil {
+	err = config.Read(configFilePath)
+	if err != nil {
 		log.Println(err)
 		return
-	} else {
-		if len(config.Key) <= 0 {
-			config.Key = os.Getenv("OBS_KEY")
-		}
-
-		if len(config.Secret) <= 0 {
-			config.Secret = os.Getenv("OBS_SECRET")
-		}
-
-		if config.Debug {
-			log.Println(config)
-		}
-
-		NewClient(config.Key, config.Secret, config.EndPoint, int(config.Timeout))
 	}
+
+	if len(config.Key) <= 0 {
+		config.Key = os.Getenv("OBS_KEY")
+	}
+
+	if len(config.Secret) <= 0 {
+		config.Secret = os.Getenv("OBS_SECRET")
+	}
+
+	if config.Debug {
+		log.Println(config)
+	}
+
+	// new obs client
+	NewClient(config.Key, config.Secret, config.EndPoint, int(config.Timeout))
 
 	if *printInfo {
 		if info, err := BucketInfo(); err != nil {
@@ -105,7 +106,7 @@ func main() {
 	// detect root directory
 	config.Root, _ = filepath.Abs(config.Root)
 	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		log.Println("config root %s is not exits or not a directory\n", config.Root)
+		log.Printf("config root %s is not exits or not a directory\n", config.Root)
 		return
 	} else if config.Debug {
 		log.Printf("root path is %s\n", config.Root)
