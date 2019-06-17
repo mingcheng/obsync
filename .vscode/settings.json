@@ -1,5 +1,4 @@
 {
   "go.buildOnSave": "workspace",
-  "go.autocompleteUnimportedPackages": true,
   "workbench.colorTheme": "Quiet Light"
 }
