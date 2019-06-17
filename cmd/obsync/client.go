@@ -1,3 +1,12 @@
+/**
+ * File: client.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Monday, June 10th 2019, 3:55:25 pm
+ * Last Modified: Monday, June 17th 2019, 3:49:10 pm
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
 package main
 
 import (

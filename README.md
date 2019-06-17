@@ -1,9 +1,19 @@
+<!--
+  File: README.md
+  Author: Ming Cheng<mingcheng@outlook.com>
+
+  Created Date: Monday, June 10th 2019, 10:46:14 am
+  Last Modified: Monday, June 17th 2019, 4:10:42 pm
+
+  http://www.opensource.org/licenses/MIT
+-->
 # Obsync - 华为云对象存储服务（OBS）同步工具
 
 ![screenshots.png](screenshots.png)
 
 ## 更新历史
 
+* 20190614 增加 PID 文件支持
 * 20190610 修复一些问题，并增加超时参数
 * 20190605 完成基本功能
 
