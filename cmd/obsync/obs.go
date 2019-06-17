@@ -1,3 +1,12 @@
+/**
+ * File: obs.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Monday, June 10th 2019, 6:23:07 pm
+ * Last Modified: Monday, June 17th 2019, 3:49:12 pm
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
 package main
 
 import (
