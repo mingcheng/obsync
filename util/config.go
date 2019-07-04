@@ -4,18 +4,15 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+
+	"github.com/mingcheng/obsync.go"
 )
 
 type Config struct {
-	Debug     bool   `json:"debug"`
-	Secret    string `json:"secret"`
-	Key       string `json:"key"`
-	EndPoint  string `json:"endpoint"`
-	Bucket    string `json:"bucket"`
-	MaxThread uint   `json:"thread"`
-	Force     bool   `json:"force"`
-	Root      string `json:"root"`
-	Timeout   uint   `json:"timeout"`
+	Debug   bool                  `json:"debug"`
+	Force   bool                  `json:"force"`
+	Root    string                `json:"root"`
+	Buckets []obsync.BucketConfig `json:"buckets"`
 }
 
 func (c *Config) Read(path string) error {

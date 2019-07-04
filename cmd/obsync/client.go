@@ -19,14 +19,6 @@ import (
 var client *obs.ObsClient
 var once sync.Once
 
-type ObsTask interface {
-	Exists() bool
-	Meta() (output *obs.GetObjectMetadataOutput, err error)
-	Put() (output *obs.PutObjectOutput, err error)
-	Del() (output *obs.DeleteObjectOutput, err error)
-	Client() *obs.ObsClient
-}
-
 type Obs struct {
 	SourceFile string
 	RemoteKey  string

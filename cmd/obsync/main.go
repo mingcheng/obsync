@@ -19,8 +19,9 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync.go/cmd/obsync/bucket"
 	"github.com/mingcheng/obsync.go/util"
-	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -56,16 +57,16 @@ func main() {
 	flag.Parse()
 
 	// detect pid file exists, and generate pid file
-	pid, err := pidfile.New(*pidFilePath)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	defer pid.Remove()
-	if config.Debug {
-		log.Println(pid)
-	}
+	// pid, _ := pidfile.New(*pidFilePath)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	//
+	// defer pid.Remove()
+	// if config.Debug {
+	// 	log.Println(pid)
+	// }
 
 	// print version and exit
 	if *printVersion {
@@ -85,29 +86,33 @@ func main() {
 		return
 	}
 
-	if len(config.Key) <= 0 {
-		config.Key = os.Getenv("OBS_KEY")
-	}
-
-	if len(config.Secret) <= 0 {
-		config.Secret = os.Getenv("OBS_SECRET")
-	}
-
 	if config.Debug {
 		log.Println(config)
 	}
 
-	// new obs client
-	NewClient(config.Key, config.Secret, config.EndPoint, int(config.Timeout))
+	ctx, cancel := context.WithCancel(context.Background())
+	for _, t := range config.Buckets {
+		switch t.Type {
+		case "obs":
+			if b, err := bucket.NewObsBucket(ctx, t, config.Debug); err != nil {
+				log.Printf(err.Error())
+			} else {
+				obsync.RegisterBucket(b)
+			}
+		case "test":
+			if b, err := bucket.NewTestBucket(ctx, t, config.Debug); err == nil {
+				obsync.RegisterBucket(b)
+			}
+		}
+	}
 
 	if *printInfo {
-		if info, err := BucketInfo(); err != nil {
-			log.Println(err)
+		if info, err := obsync.GetBucketInfo(); err != nil {
+			log.Printf("err: %v\n", err)
 		} else {
-			if config.Debug {
-				_, _ = fmt.Fprintln(os.Stderr, config)
+			for _, i := range info {
+				log.Println(i)
 			}
-			_, _ = fmt.Fprintf(os.Stderr, "%s: %s\n", config.Bucket, info)
 		}
 
 		return
@@ -123,32 +128,24 @@ func main() {
 	}
 
 	// get all obs tasks and put
-	if obs, err := ObsTasks(config.Root); err != nil {
+	if tasks, err := obsync.BucketTasksByPath(config.Root); err != nil || len(tasks) <= 0 {
 		log.Println(err)
 	} else {
-		if len(obs) > 0 {
-			ctx, cancel := context.WithCancel(context.TODO())
-			syncTask := NewTask(ctx, config.MaxThread, obs)
+		obsync.RunTasks(tasks)
 
-			// waiting for system s or user interrupt
-			go func() {
-				// register system signal
-				sig := make(chan os.Signal)
-				signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
+		go func() {
+			sig := make(chan os.Signal)
+			signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 
-				for s := range sig {
-					switch s {
-					default:
-						log.Println("caught signal, stopping all tasks")
-						cancel()
-					}
+			for s := range sig {
+				switch s {
+				default:
+					cancel()
+					log.Println("caught signal, stopping all tasks")
 				}
-			}()
+			}
+		}()
 
-			// running sync task
-			syncTask.Run()
-		} else {
-			log.Println("obs list is empty")
-		}
+		obsync.Wait()
 	}
 }
