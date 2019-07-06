@@ -44,7 +44,7 @@ type Bucket interface {
 
 var (
 	buckets = make(map[string]func(c BucketConfig) (Bucket, error))
-	runners = make(map[string]BucketRunner)
+	runners []BucketRunner
 )
 
 func RegisterBucket(typeName string, f func(c BucketConfig) (Bucket, error)) {
@@ -68,10 +68,10 @@ func addSingleRunner(ctx context.Context, typeName string, debug bool, config Bu
 			return err
 		}
 
-		if runner, err := NewBucketTask(ctx, typeName, client, config, debug); err != nil {
+		if runner, err := NewBucketTask(&ctx, typeName, client, config, debug); err != nil {
 			return err
 		} else {
-			runners[config.Name] = runner
+			runners = append(runners, runner)
 		}
 		return nil
 	}
@@ -99,8 +99,8 @@ func Wait() {
 	}
 }
 
-// BucketTasksByPath get tasks by directory, ignore "." prefix files
-func BucketTasksByPath(root string) ([]BucketTask, error) {
+// TasksByPath get tasks by directory, ignore "." prefix files
+func TasksByPath(root string) ([]BucketTask, error) {
 	var tasks []BucketTask
 
 	if e := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {

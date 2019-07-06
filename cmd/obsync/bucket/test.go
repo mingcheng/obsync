@@ -21,8 +21,7 @@ func (t TestBucket) Exists(path string) bool {
 }
 
 func (t TestBucket) Put(task obsync.BucketTask) {
-	log.Printf("mock updated to %s by test bucket", task.Key)
-	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
 }
 
 func init() {

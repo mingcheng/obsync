@@ -115,7 +115,7 @@ func main() {
 	}
 
 	// get all obs tasks and put
-	if tasks, err := obsync.BucketTasksByPath(config.Root); err != nil || len(tasks) <= 0 {
+	if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
 		log.Println(err)
 	} else {
 		obsync.RunTasks(tasks)
