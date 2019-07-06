@@ -20,8 +20,9 @@ import (
 	"syscall"
 
 	"github.com/mingcheng/obsync.go"
-	"github.com/mingcheng/obsync.go/cmd/obsync/bucket"
+	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
 	"github.com/mingcheng/obsync.go/util"
+	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -57,16 +58,16 @@ func main() {
 	flag.Parse()
 
 	// detect pid file exists, and generate pid file
-	// pid, _ := pidfile.New(*pidFilePath)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return
-	// }
-	//
-	// defer pid.Remove()
-	// if config.Debug {
-	// 	log.Println(pid)
-	// }
+	pid, err := pidfile.New(*pidFilePath)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer pid.Remove()
+	if config.Debug {
+		log.Println(pid)
+	}
 
 	// print version and exit
 	if *printVersion {
@@ -91,28 +92,14 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	for _, t := range config.Buckets {
-		switch t.Type {
-		case "obs":
-			if b, err := bucket.NewObsBucket(ctx, t, config.Debug); err != nil {
-				log.Printf(err.Error())
-			} else {
-				obsync.RegisterBucket(b)
-			}
-		case "test":
-			if b, err := bucket.NewTestBucket(ctx, t, config.Debug); err == nil {
-				obsync.RegisterBucket(b)
-			}
-		}
-	}
+
+	// @TODO
+	obsync.AddBucketRunners(ctx, config.Debug, config.Buckets)
 
 	if *printInfo {
-		if info, err := obsync.GetBucketInfo(); err != nil {
-			log.Printf("err: %v\n", err)
-		} else {
-			for _, i := range info {
-				log.Println(i)
-			}
+		info, _ := obsync.GetBucketInfo()
+		for k, i := range info {
+			log.Println(k, i)
 		}
 
 		return

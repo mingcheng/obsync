@@ -11,6 +11,9 @@
 package obsync
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,40 +37,65 @@ type BucketTask struct {
 }
 
 type Bucket interface {
-	RunTasks(tasks []BucketTask)
 	Info() (interface{}, error)
 	Exists(path string) bool
-	Wait()
+	Put(task BucketTask)
 }
 
-var buckets []Bucket
+var (
+	buckets = make(map[string]func(c BucketConfig) (Bucket, error))
+	runners = make(map[string]BucketRunner)
+)
 
-func RegisterBucket(bucket Bucket) {
-	buckets = append(buckets, bucket)
+func RegisterBucket(typeName string, f func(c BucketConfig) (Bucket, error)) {
+	buckets[typeName] = f
+}
+
+func AddBucketRunners(ctx context.Context, debug bool, configs []BucketConfig) {
+	for _, config := range configs {
+		if err := addSingleRunner(ctx, config.Type, debug, config); err != nil {
+			log.Println(err.Error())
+		}
+	}
+}
+
+func addSingleRunner(ctx context.Context, typeName string, debug bool, config BucketConfig) error {
+	if callback, ok := buckets[typeName]; !ok {
+		return fmt.Errorf("err: bucket callback which name %s does not exists", typeName)
+	} else {
+		client, err := callback(config)
+		if err != nil {
+			return err
+		}
+
+		if runner, err := NewBucketTask(ctx, typeName, client, config, debug); err != nil {
+			return err
+		} else {
+			runners[config.Name] = runner
+		}
+		return nil
+	}
 }
 
 func GetBucketInfo() ([]interface{}, error) {
 	var result []interface{}
-	for _, bucket := range buckets {
-		if data, err := bucket.Info(); err != nil {
-			return nil, err
-		} else {
-			result = append(result, data)
-		}
+	for _, bucket := range runners {
+		data, _ := bucket.Info()
+		result = append(result, data)
 	}
 
 	return result, nil
 }
 
 func RunTasks(t []BucketTask) {
-	for _, bucket := range buckets {
-		bucket.RunTasks(t)
+	for _, runner := range runners {
+		runner.RunAll(t)
 	}
 }
 
 func Wait() {
-	for _, bucket := range buckets {
-		bucket.Wait()
+	for _, runner := range runners {
+		runner.Wait()
 	}
 }
 

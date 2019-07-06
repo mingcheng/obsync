@@ -15,7 +15,7 @@ type BaseModel struct {
 
 type Bucket struct {
 	XMLName      xml.Name  `xml:"Bucket"`
-	Name         string    `xml:"Name"`
+	Name         string    `xml:"Type"`
 	CreationDate time.Time `xml:"CreationDate"`
 	Location     string    `xml:"Location"`
 }
@@ -129,7 +129,7 @@ type ListObjectsOutput struct {
 	Marker         string    `xml:"Marker"`
 	NextMarker     string    `xml:"NextMarker"`
 	MaxKeys        int       `xml:"MaxKeys"`
-	Name           string    `xml:"Name"`
+	Name           string    `xml:"Type"`
 	Prefix         string    `xml:"Prefix"`
 	Contents       []Content `xml:"Contents"`
 	CommonPrefixes []string  `xml:"CommonPrefixes>Prefix"`
@@ -170,7 +170,7 @@ type ListVersionsOutput struct {
 	VersionIdMarker     string         `xml:"VersionIdMarker"`
 	NextVersionIdMarker string         `xml:"NextVersionIdMarker"`
 	MaxKeys             int            `xml:"MaxKeys"`
-	Name                string         `xml:"Name"`
+	Name                string         `xml:"Type"`
 	Prefix              string         `xml:"Prefix"`
 	Versions            []Version      `xml:"Version"`
 	DeleteMarkers       []DeleteMarker `xml:"DeleteMarker"`
@@ -547,7 +547,7 @@ type GetBucketTaggingOutput struct {
 
 type FilterRule struct {
 	XMLName xml.Name `xml:"FilterRule"`
-	Name    string   `xml:"Name,omitempty"`
+	Name    string   `xml:"Type,omitempty"`
 	Value   string   `xml:"Value,omitempty"`
 }
 

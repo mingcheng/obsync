@@ -769,7 +769,7 @@ type EventType string
 
 const (
 	ObjectCreatedAll  EventType = "ObjectCreated:*"
-	ObjectCreatedPut  EventType = "ObjectCreated:Put"
+	ObjectCreatedPut  EventType = "ObjectCreated:Run"
 	ObjectCreatedPost EventType = "ObjectCreated:Post"
 
 	ObjectCreatedCopy                    EventType = "ObjectCreated:Copy"

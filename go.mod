@@ -5,8 +5,11 @@ go 1.12
 replace github.com/mingcheng/pidfile => ../pidfile
 
 require (
-	github.com/mdempsky/gocode v0.0.0-20190203001940-7fb65232883f // indirect
+	github.com/aliyun/aliyun-oss-go-sdk v2.0.0+incompatible
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mingcheng/pidfile v0.0.0-00010101000000-000000000000
-	golang.org/x/sys v0.0.0-20190610200419-93c9922d18ae // indirect
-	golang.org/x/tools v0.0.0-20190620191750-1fa568393b23 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )

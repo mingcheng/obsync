@@ -33,7 +33,7 @@ func ParseStringToEventType(value string) (ret EventType) {
 	switch value {
 	case "ObjectCreated:*", "s3:ObjectCreated:*":
 		ret = ObjectCreatedAll
-	case "ObjectCreated:Put", "s3:ObjectCreated:Put":
+	case "ObjectCreated:Run", "s3:ObjectCreated:Run":
 		ret = ObjectCreatedPut
 	case "ObjectCreated:Post", "s3:ObjectCreated:Post":
 		ret = ObjectCreatedPost
@@ -340,7 +340,7 @@ func converntFilterRulesToXml(filterRules []FilterRule, isObs bool) string {
 			xml = append(xml, "<FilterRule>")
 			if filterRule.Name != "" {
 				filterRuleName := XmlTranscoding(filterRule.Name)
-				xml = append(xml, fmt.Sprintf("<Name>%s</Name>", filterRuleName))
+				xml = append(xml, fmt.Sprintf("<Type>%s</Type>", filterRuleName))
 			}
 			if filterRule.Value != "" {
 				filterRuleValue := XmlTranscoding(filterRule.Value)
