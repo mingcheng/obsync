@@ -11,8 +11,12 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mingcheng/pidfile v0.0.0-00010101000000-000000000000
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
+	github.com/qiniu/api.v7 v7.2.5+incompatible
+	github.com/qiniu/x v7.0.8+incompatible // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/tencentyun/cos-go-sdk-v5 v0.0.0-20190701040112-26c1242e220f
+	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	qiniupkg.com/x v7.0.8+incompatible // indirect
 )

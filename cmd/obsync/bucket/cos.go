@@ -36,7 +36,7 @@ func (t COSBucket) Exists(path string) bool {
 	if resp, err := t.Client.Object.Head(context.Background(), path, nil); err != nil {
 		return false
 	} else {
-		return resp.StatusCode != http.StatusOK
+		return resp.StatusCode == http.StatusOK
 	}
 }
 
