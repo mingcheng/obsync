@@ -1,3 +1,13 @@
+/**
+ * File: oss.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Saturday, July 6th 2019, 9:10:37 pm
+ * Last Modified: Saturday, July 6th 2019, 11:19:52 pm
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
+
 package bucket
 
 import (

@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Friday, June 21st 2019, 11:31:48 am
- * Last Modified: Friday, June 21st 2019, 11:34:38 am
+ * Last Modified: Saturday, July 6th 2019, 11:27:19 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -19,55 +19,51 @@ import (
 	"github.com/mingcheng/obsync.go/obs"
 )
 
-// ObsBucket struct for obs client
+// OBSBucket struct for obs client
 type OBSBucket struct {
 	Client *obs.ObsClient
 	Config obsync.BucketConfig
 }
 
-// Run a file to obs bucket
+// Put a file to obs bucket
 func (o *OBSBucket) Put(task obsync.BucketTask) {
-	if o.Config.Force || !o.Exists(task.Key) {
-		input := &obs.PutFileInput{}
-		input.Bucket = o.Config.Name
-		input.Key = task.Key
-		input.SourceFile = task.Local
+	input := &obs.PutFileInput{}
+	input.Bucket = o.Config.Name
+	input.Key = task.Key
+	input.SourceFile = task.Local
 
-		log.Printf("start upload %s to obs", task.Key)
-		if output, err := o.Client.PutFile(input); err != nil {
-			log.Println(err)
-		} else {
-			log.Printf("put %s with out error, status code %d", task.Key, output.StatusCode)
-		}
+	log.Printf("start upload %s to obs", task.Key)
+	if output, err := o.Client.PutFile(input); err != nil {
+		log.Println(err)
 	} else {
-		log.Printf("%s is exists, ignore", task.Key)
+		log.Printf("put %s with out error, status code %d", task.Key, output.StatusCode)
 	}
 }
 
 // Exists detect object whether exists
 func (o *OBSBucket) Exists(path string) bool {
-	meta, err := o.Client.GetObjectMetadata(&obs.GetObjectMetadataInput{
+	if meta, err := o.Client.GetObjectMetadata(&obs.GetObjectMetadataInput{
 		Bucket: o.Config.Name,
 		Key:    path,
-	})
-
-	if err != nil {
+	}); err != nil {
 		return false
+	} else {
+		return meta.StatusCode == http.StatusOK
 	}
-
-	return meta.StatusCode == http.StatusOK
 }
 
+// Info get obs bucket info
 func (o *OBSBucket) Info() (interface{}, error) {
-	if info, err := o.Client.GetBucketStorageInfo(o.Config.Name); err != nil {
+	info, err := o.Client.GetBucketStorageInfo(o.Config.Name)
+	if err != nil {
 		return nil, err
-	} else {
-		if info.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("remote obs server does not response ok status")
-		} else {
-			return info, nil
-		}
 	}
+
+	if info.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("remote obs server does not response ok status")
+	}
+
+	return info, nil
 }
 
 func init() {

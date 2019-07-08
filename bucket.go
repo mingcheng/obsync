@@ -59,24 +59,34 @@ func AddBucketRunners(ctx context.Context, debug bool, configs []BucketConfig) {
 	}
 }
 
-func addSingleRunner(ctx context.Context, typeName string, debug bool, config BucketConfig) error {
+func NewBucketCallBack(typeName string) (func(c BucketConfig) (Bucket, error), error) {
 	if callback, ok := buckets[typeName]; !ok {
-		return fmt.Errorf("err: bucket callback which name %s does not exists", typeName)
+		return nil, fmt.Errorf("err: bucket callback which name %s does not exists", typeName)
 	} else {
-		client, err := callback(config)
-		if err != nil {
-			return err
-		}
-
-		if runner, err := NewBucketTask(&ctx, typeName, client, config, debug); err != nil {
-			return err
-		} else {
-			runners = append(runners, runner)
-		}
-		return nil
+		return callback, nil
 	}
 }
 
+func addSingleRunner(ctx context.Context, typeName string, debug bool, config BucketConfig) error {
+	callback, err := NewBucketCallBack(typeName)
+	if err != nil {
+		return err
+	}
+
+	client, err := callback(config)
+	if err != nil {
+		return err
+	}
+
+	if runner, err := NewBucketTask(ctx, typeName, client, config, debug); err != nil {
+		return err
+	} else {
+		runners = append(runners, runner)
+	}
+	return nil
+}
+
+// GetBucketInfo get all bucket info
 func GetBucketInfo() ([]interface{}, error) {
 	var result []interface{}
 	for _, bucket := range runners {
@@ -87,12 +97,16 @@ func GetBucketInfo() ([]interface{}, error) {
 	return result, nil
 }
 
+// RunTasks run all tasks
 func RunTasks(t []BucketTask) {
 	for _, runner := range runners {
-		runner.RunAll(t)
+		if err := runner.RunAll(t); err != nil {
+			log.Println(err)
+		}
 	}
 }
 
+// Wait block when all runner is running
 func Wait() {
 	for _, runner := range runners {
 		runner.Wait()

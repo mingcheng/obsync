@@ -1,7 +1,16 @@
+/**
+ * File: test.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Saturday, July 6th 2019, 11:19:12 pm
+ * Last Modified: Sunday, July 7th 2019, 5:40:21 pm
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
+
 package bucket
 
 import (
-	"log"
 	"math/rand"
 	"time"
 
@@ -26,8 +35,7 @@ func (t TestBucket) Put(task obsync.BucketTask) {
 
 func init() {
 	obsync.RegisterBucket("test", func(config obsync.BucketConfig) (obsync.Bucket, error) {
-		log.Printf("init function from TestBucket")
-		return &TestBucket{
+		return TestBucket{
 			Config: config,
 		}, nil
 	})
