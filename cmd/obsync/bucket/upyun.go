@@ -1,3 +1,13 @@
+/**
+ * File: upyun.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Tuesday, July 9th 2019, 10:41:02 am
+ * Last Modified: Tuesday, July 9th 2019, 10:50:29 am
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
+
 package bucket
 
 import (

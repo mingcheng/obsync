@@ -1,3 +1,13 @@
+/**
+ * File: cos.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Monday, July 8th 2019, 5:07:09 pm
+ * Last Modified: Tuesday, July 9th 2019, 10:50:12 am
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
+
 package bucket
 
 import (
