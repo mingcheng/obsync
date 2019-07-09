@@ -11,11 +11,9 @@ import (
 )
 
 type putRet struct {
-	Key    string
-	Hash   string
-	Fsize  int
-	Bucket string
-	Name   string
+	Key   string
+	Hash  string
+	Fsize int
 }
 
 type QiNiuBucket struct {
@@ -64,7 +62,7 @@ func (t QiNiuBucket) Put(task obsync.BucketTask) {
 	if err != nil {
 		log.Printf("put %s with error: %v", task.Key, err)
 	} else {
-		log.Printf("put %s finished, with hash %s", task.Key, ret.Hash)
+		log.Printf("put %s finished, with hash %s", ret.Key, ret.Hash)
 	}
 }
 
@@ -72,7 +70,7 @@ func (t QiNiuBucket) UploadToken(task obsync.BucketTask) string {
 	putPolicy := storage.PutPolicy{
 		Scope:      fmt.Sprintf("%s:%s", t.Config.Name, task.Key),
 		Expires:    uint32(t.Config.Timeout),
-		ReturnBody: `{"key":"$(key)","hash":"$(etag)","fsize":$(fsize),"bucket":"$(bucket)","name":"$(x:name)"}`,
+		ReturnBody: `{"key":"$(key)","hash":"$(etag)","fsize":$(fsize)}`,
 	}
 
 	return putPolicy.UploadToken(t.Mac)
@@ -80,7 +78,6 @@ func (t QiNiuBucket) UploadToken(task obsync.BucketTask) string {
 
 func init() {
 	obsync.RegisterBucket("qiniu", func(config obsync.BucketConfig) (obsync.Bucket, error) {
-
 		return QiNiuBucket{
 			Config: config,
 			Mac:    qbox.NewMac(config.Key, config.Secret),
