@@ -2,14 +2,14 @@ module github.com/mingcheng/obsync.go
 
 go 1.12
 
-replace github.com/mingcheng/pidfile => ../pidfile
+// replace github.com/mingcheng/pidfile => ../pidfile
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.0.0+incompatible
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/mingcheng/pidfile v0.0.0-00010101000000-000000000000
+	github.com/mingcheng/pidfile v0.0.0-20190612120558-96d6bd443f39
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/qiniu/api.v7 v7.2.5+incompatible
 	github.com/qiniu/x v7.0.8+incompatible // indirect
