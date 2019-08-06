@@ -50,6 +50,8 @@ func (b BucketRunner) RunAll(tasks []BucketTask) error {
 			log.Println(err.Error())
 		}
 		return err
+	} else if b.Debug {
+		log.Printf("total tasks are %d", len(tasks))
 	}
 
 	// process tasks without any error

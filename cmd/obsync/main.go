@@ -18,6 +18,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/mingcheng/obsync.go"
 	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
@@ -118,8 +119,6 @@ func main() {
 	if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
 		log.Println(err)
 	} else {
-		obsync.RunTasks(tasks)
-
 		go func() {
 			sig := make(chan os.Signal)
 			signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
@@ -133,6 +132,9 @@ func main() {
 			}
 		}()
 
+		obsync.RunTasks(tasks)
+
+		time.Sleep(1 * time.Second) // ugly waiting
 		obsync.Wait()
 	}
 }

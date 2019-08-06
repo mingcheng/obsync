@@ -3,7 +3,7 @@
 /build
 /target
 /vendor
-/config.json
+/*.json
 Thumbs.db
 .DS*
 /.idea
