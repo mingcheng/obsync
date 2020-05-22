@@ -1,3 +1,15 @@
+// Copyright 2019 Huawei Technologies Co.,Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License.  You may obtain a copy of the
+// License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations under the License.
+
 package obs
 
 import (
@@ -15,7 +27,7 @@ type BaseModel struct {
 
 type Bucket struct {
 	XMLName      xml.Name  `xml:"Bucket"`
-	Name         string    `xml:"Type"`
+	Name         string    `xml:"Name"`
 	CreationDate time.Time `xml:"CreationDate"`
 	Location     string    `xml:"Location"`
 }
@@ -129,7 +141,7 @@ type ListObjectsOutput struct {
 	Marker         string    `xml:"Marker"`
 	NextMarker     string    `xml:"NextMarker"`
 	MaxKeys        int       `xml:"MaxKeys"`
-	Name           string    `xml:"Type"`
+	Name           string    `xml:"Name"`
 	Prefix         string    `xml:"Prefix"`
 	Contents       []Content `xml:"Contents"`
 	CommonPrefixes []string  `xml:"CommonPrefixes>Prefix"`
@@ -170,7 +182,7 @@ type ListVersionsOutput struct {
 	VersionIdMarker     string         `xml:"VersionIdMarker"`
 	NextVersionIdMarker string         `xml:"NextVersionIdMarker"`
 	MaxKeys             int            `xml:"MaxKeys"`
-	Name                string         `xml:"Type"`
+	Name                string         `xml:"Name"`
 	Prefix              string         `xml:"Prefix"`
 	Versions            []Version      `xml:"Version"`
 	DeleteMarkers       []DeleteMarker `xml:"DeleteMarker"`
@@ -278,9 +290,10 @@ type grantObs struct {
 }
 
 type AccessControlPolicy struct {
-	XMLName xml.Name `xml:"AccessControlPolicy"`
-	Owner   Owner    `xml:"Owner"`
-	Grants  []Grant  `xml:"AccessControlList>Grant"`
+	XMLName    xml.Name `xml:"AccessControlPolicy"`
+	Owner      Owner    `xml:"Owner"`
+	Grants     []Grant  `xml:"AccessControlList>Grant"`
+	Delivered  string   `xml:"Delivered,omitempty"`
 }
 
 type accessControlPolicyObs struct {
@@ -312,7 +325,7 @@ type SetBucketPolicyInput struct {
 
 type GetBucketPolicyOutput struct {
 	BaseModel
-	Policy string `body`
+	Policy string `json:"body"`
 }
 
 type CorsRule struct {
@@ -547,7 +560,7 @@ type GetBucketTaggingOutput struct {
 
 type FilterRule struct {
 	XMLName xml.Name `xml:"FilterRule"`
-	Name    string   `xml:"Type,omitempty"`
+	Name    string   `xml:"Name,omitempty"`
 	Value   string   `xml:"Value,omitempty"`
 }
 
@@ -901,7 +914,7 @@ type ListPartsOutput struct {
 	MaxParts             int              `xml:"MaxParts"`
 	IsTruncated          bool             `xml:"IsTruncated"`
 	StorageClass         StorageClassType `xml:"StorageClass"`
-	Initiator            Initiator        `xml:"Initiator“`
+	Initiator            Initiator        `xml:"Initiator"`
 	Owner                Owner            `xml:"Owner"`
 	Parts                []Part           `xml:"Part"`
 }

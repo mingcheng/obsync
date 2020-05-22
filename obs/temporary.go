@@ -1,3 +1,15 @@
+// Copyright 2019 Huawei Technologies Co.,Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License.  You may obtain a copy of the
+// License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations under the License.
+
 package obs
 
 import (
@@ -32,7 +44,7 @@ func (obsClient ObsClient) CreateSignedUrl(input *CreateSignedUrlInput) (output 
 	if input.Expires <= 0 {
 		input.Expires = 300
 	}
-
+	
 	requestUrl, err := obsClient.doAuthTemporary(string(input.Method), input.Bucket, input.Key, params, headers, int64(input.Expires))
 	if err != nil {
 		return nil, err
@@ -43,6 +55,16 @@ func (obsClient ObsClient) CreateSignedUrl(input *CreateSignedUrlInput) (output 
 		ActualSignedRequestHeaders: headers,
 	}
 	return
+}
+
+func (obsClient ObsClient) isSecurityToken(params map[string]string){
+	if obsClient.conf.securityProvider.securityToken != "" {
+		if obsClient.conf.signature == SignatureObs {
+			params[HEADER_STS_TOKEN_OBS] = obsClient.conf.securityProvider.securityToken
+		} else {
+			params[HEADER_STS_TOKEN_AMZ] = obsClient.conf.securityProvider.securityToken
+		}
+	}
 }
 
 func (obsClient ObsClient) CreateBrowserBasedSignature(input *CreateBrowserBasedSignatureInput) (output *CreateBrowserBasedSignatureOutput, err error) {
@@ -66,13 +88,13 @@ func (obsClient ObsClient) CreateBrowserBasedSignature(input *CreateBrowserBased
 	}
 
 	expiration := date.Add(time.Second * time.Duration(input.Expires)).Format(ISO8601_DATE_FORMAT)
-	params[PARAM_ALGORITHM_AMZ_CAMEL] = V4_HASH_PREFIX
-	params[PARAM_CREDENTIAL_AMZ_CAMEL] = credential
-	params[PARAM_DATE_AMZ_CAMEL] = longDate
-
-	if obsClient.conf.securityProvider.securityToken != "" {
-		params[HEADER_STS_TOKEN_AMZ] = obsClient.conf.securityProvider.securityToken
+	if obsClient.conf.signature == SignatureV4{
+		params[PARAM_ALGORITHM_AMZ_CAMEL] = V4_HASH_PREFIX
+		params[PARAM_CREDENTIAL_AMZ_CAMEL] = credential
+		params[PARAM_DATE_AMZ_CAMEL] = longDate
 	}
+
+	obsClient.isSecurityToken(params)
 
 	matchAnyBucket := true
 	matchAnyKey := true
@@ -110,7 +132,12 @@ func (obsClient ObsClient) CreateBrowserBasedSignature(input *CreateBrowserBased
 
 	originPolicy := strings.Join(originPolicySlice, "")
 	policy := Base64Encode([]byte(originPolicy))
-	signature := getSignature(policy, obsClient.conf.securityProvider.sk, obsClient.conf.region, shortDate)
+	var signature string
+	if obsClient.conf.signature == SignatureV4{
+		signature = getSignature(policy, obsClient.conf.securityProvider.sk, obsClient.conf.region, shortDate)
+	}else{
+		signature = Base64Encode(HmacSha1([]byte(obsClient.conf.securityProvider.sk), []byte(policy)))
+	}
 
 	output = &CreateBrowserBasedSignatureOutput{
 		OriginPolicy: originPolicy,
@@ -554,14 +581,21 @@ func (obsClient ObsClient) PutFileWithSignedUrl(signedUrl string, actualSignedRe
 	var data io.Reader
 	sourceFile = strings.TrimSpace(sourceFile)
 	if sourceFile != "" {
-		fd, err := os.Open(sourceFile)
-		if err != nil {
+		fd, _err := os.Open(sourceFile)
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
-		defer fd.Close()
+		defer func(){
+			errMsg := fd.Close()
+			if errMsg != nil{
+				doLog(LEVEL_WARN, "Failed to close file with reason: %v", errMsg)
+			}
+		}()
 
-		stat, err := fd.Stat()
-		if err != nil {
+		stat, _err := fd.Stat()
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
 		fileReaderWrapper := &fileReaderWrapper{filePath: sourceFile}
