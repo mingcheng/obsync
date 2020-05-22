@@ -84,8 +84,7 @@ func main() {
 
 	// read config and initial obs client
 	if err := config.Read(configFilePath); err != nil {
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
 
 	if config.Debug {
@@ -115,7 +114,13 @@ func main() {
 		log.Printf("root path is %s\n", config.Root)
 	}
 
+	dur, err := time.ParseDuration(config.Interval)
+	if err != nil {
+		panic(err)
+	}
+	dur.Hours()
 	// get all obs tasks and put
+start:
 	if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
 		log.Println(err)
 	} else {
@@ -127,6 +132,7 @@ func main() {
 				switch s {
 				default:
 					cancel()
+					config.Standalone = false
 					log.Println("caught signal, stopping all tasks")
 				}
 			}
@@ -136,5 +142,14 @@ func main() {
 
 		time.Sleep(1 * time.Second) // ugly waiting
 		obsync.Wait()
+
+		if config.Standalone {
+			if dur, err := time.ParseDuration(config.Interval); err != nil {
+				log.Panic(err)
+			} else {
+				time.Sleep(dur)
+				goto start
+			}
+		}
 	}
 }

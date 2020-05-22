@@ -9,10 +9,12 @@ import (
 )
 
 type Config struct {
-	Debug   bool                  `json:"debug"`
-	Force   bool                  `json:"force"`
-	Root    string                `json:"root"`
-	Buckets []obsync.BucketConfig `json:"buckets"`
+	Debug      bool                  `json:"debug"`
+	Force      bool                  `json:"force"`
+	Root       string                `json:"root"`
+	Standalone bool                  `json:"standalone"`
+	Interval   string                `json:"interval"`
+	Buckets    []obsync.BucketConfig `json:"buckets"`
 }
 
 func (c *Config) Read(path string) error {
