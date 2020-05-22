@@ -1,5 +1,5 @@
-FROM golang:1.12.6 AS builder
-LABEL maintainer="Ming Cheng"
+FROM golang:1.14.3-alpine AS builder
+LABEL maintainer="Ming Chen"
 
 # Using 163 mirror for Debian Strech
 #RUN sed -i 's/deb.debian.org/mirrors.163.com/g' /etc/apt/sources.list
@@ -26,7 +26,7 @@ RUN make clean && \
   mv ${TARGET_DIR}/obsync /usr/bin/obsync
 
 # Stage2
-FROM alpine:3.10
+FROM alpine:3.9.6
 
 # @from https://mirrors.ustc.edu.cn/help/alpine.html
 #RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
