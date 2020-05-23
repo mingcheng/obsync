@@ -35,13 +35,11 @@ func (b BucketRunner) Info() (interface{}, error) {
 }
 
 // RunAll process all tasks
-func (b BucketRunner) RunAll(tasks []BucketTask) error {
+func (b BucketRunner) RunAll(ctx context.Context, tasks []BucketTask) {
 	if _, err := b.Info(); err != nil {
 		if b.Debug {
 			log.Printf("check status with error: %s", err)
 		}
-
-		return err
 	}
 
 	if len(tasks) <= 0 {
@@ -49,58 +47,59 @@ func (b BucketRunner) RunAll(tasks []BucketTask) error {
 		if b.Debug {
 			log.Println(err.Error())
 		}
-		return err
+
+		return
 	} else if b.Debug {
 		log.Printf("total tasks are %d", len(tasks))
 	}
 
-	// process tasks without any error
-	for _, task := range tasks {
-		go b.Run(task)
-	}
+	go func() {
+		var i = 0
+		for i < len(tasks) {
+			task := <-b.taskChan
+			if err := b.Run(ctx, task); err != nil && b.Debug {
+				log.Println(err)
+			}
+			b.wg.Done()
+			i++
+		}
+	}()
 
-	return nil
+	// process tasks without any error
+	b.wg.Add(len(tasks))
+	for _, task := range tasks {
+		b.taskChan <- task
+	}
 }
 
 // Run run single task
-func (b BucketRunner) Run(task BucketTask) {
-	b.taskChan <- task
-	b.wg.Add(1)
+func (b BucketRunner) Run(ctx context.Context, task BucketTask) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(b.Config.Timeout)*time.Second)
+	defer cancel()
 
-	timeoutCtx, cancel := context.WithTimeout(*b.Context, time.Duration(b.Config.Timeout)*time.Second)
-	done := make(chan bool, 0)
-
-	defer func() {
-		b.wg.Done()
-		cancel()
-	}()
-
+	done := make(chan bool)
 	go func(d chan bool) {
 		if b.Config.Force || !b.Client.Exists(task.Key) {
 			b.Client.Put(task)
 		} else if b.Debug {
 			log.Printf("%s | %s | %s is exists, ignore", b.Config.Name, b.Type, task.Key)
 		}
-
-		<-b.taskChan
 		d <- true
 	}(done)
 
 	select {
-	case <-(*b.Context).Done():
-		if b.Debug {
-			log.Printf("%s | %s | %s was canceled", b.Config.Name, b.Type, task.Key)
-		}
-
 	case <-done:
 		if b.Debug {
 			log.Printf("%s | %s | %s was done", b.Config.Name, b.Type, task.Key)
 		}
+		return nil
 
 	case <-timeoutCtx.Done():
+		err := fmt.Errorf("%s | %s | %s was timeout", b.Config.Name, b.Type, task.Key)
 		if b.Debug {
-			log.Printf("%s | %s | %s was timeout", b.Config.Name, b.Type, task.Key)
+			log.Println(err)
 		}
+		return err
 	}
 }
 
@@ -110,7 +109,7 @@ func (b BucketRunner) Wait() {
 }
 
 // NewBucketTask get new task instance
-func NewBucketTask(ctx context.Context, typeName string, client Bucket, config BucketConfig, debug bool) (BucketRunner, error) {
+func NewBucketTask(typeName string, client Bucket, config BucketConfig, debug bool) (BucketRunner, error) {
 	runner := BucketRunner{
 		taskChan: make(chan BucketTask, config.Thread),
 		wg:       &sync.WaitGroup{},
@@ -118,7 +117,6 @@ func NewBucketTask(ctx context.Context, typeName string, client Bucket, config B
 		Client:   client,
 		Config:   config,
 		Debug:    debug,
-		Context:  &ctx,
 	}
 
 	return runner, nil

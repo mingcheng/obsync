@@ -51,9 +51,9 @@ func RegisterBucket(typeName string, f func(c BucketConfig) (Bucket, error)) {
 	buckets[typeName] = f
 }
 
-func AddBucketRunners(ctx context.Context, debug bool, configs []BucketConfig) {
+func AddBucketRunners(configs []BucketConfig, debug bool) {
 	for _, config := range configs {
-		if err := addSingleRunner(ctx, config.Type, debug, config); err != nil {
+		if err := addSingleRunner(config.Type, debug, config); err != nil {
 			log.Println(err.Error())
 		}
 	}
@@ -67,7 +67,7 @@ func NewBucketCallBack(typeName string) (func(c BucketConfig) (Bucket, error), e
 	}
 }
 
-func addSingleRunner(ctx context.Context, typeName string, debug bool, config BucketConfig) error {
+func addSingleRunner(typeName string, debug bool, config BucketConfig) error {
 	callback, err := NewBucketCallBack(typeName)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func addSingleRunner(ctx context.Context, typeName string, debug bool, config Bu
 		return err
 	}
 
-	if runner, err := NewBucketTask(ctx, typeName, client, config, debug); err != nil {
+	if runner, err := NewBucketTask(typeName, client, config, debug); err != nil {
 		return err
 	} else {
 		runners = append(runners, runner)
@@ -98,11 +98,9 @@ func GetBucketInfo() ([]interface{}, error) {
 }
 
 // RunTasks run all tasks
-func RunTasks(t []BucketTask) {
+func RunTasks(ctx context.Context, t []BucketTask) {
 	for _, runner := range runners {
-		if err := runner.RunAll(t); err != nil {
-			log.Println(err)
-		}
+		runner.RunAll(ctx, t)
 	}
 }
 

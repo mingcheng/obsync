@@ -91,10 +91,8 @@ func main() {
 		log.Println(config)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	// @TODO
-	obsync.AddBucketRunners(ctx, config.Debug, config.Buckets)
+	obsync.AddBucketRunners(config.Buckets, config.Debug)
 
 	if *printInfo {
 		info, _ := obsync.GetBucketInfo()
@@ -120,7 +118,7 @@ func main() {
 	}
 	dur.Hours()
 	// get all obs tasks and put
-start:
+
 	if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
 		log.Println(err)
 	} else {
@@ -131,25 +129,17 @@ start:
 			for s := range sig {
 				switch s {
 				default:
-					cancel()
-					config.Standalone = false
+					// config.Standalone = false
 					log.Println("caught signal, stopping all tasks")
+					os.Exit(0)
 				}
 			}
 		}()
 
-		obsync.RunTasks(tasks)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-		time.Sleep(1 * time.Second) // ugly waiting
+		obsync.RunTasks(ctx, tasks)
 		obsync.Wait()
-
-		if config.Standalone {
-			if dur, err := time.ParseDuration(config.Interval); err != nil {
-				log.Panic(err)
-			} else {
-				time.Sleep(dur)
-				goto start
-			}
-		}
 	}
 }
