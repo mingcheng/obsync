@@ -37,6 +37,7 @@ steps:
       GOPROXY: https://goproxy.cn
       GOOS: linux
     commands:
+      - env
       - make docker_image_publish
 trigger:
   branch:
