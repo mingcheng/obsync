@@ -1,4 +1,4 @@
-FROM golang:1.14.3 AS builder
+FROM golang:1.13.11 AS builder
 LABEL maintainer="Ming Chen"
 
 # Using 163 mirror for Debian Strech
