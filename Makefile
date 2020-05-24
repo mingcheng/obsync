@@ -45,8 +45,8 @@ docker_image:
 
 docker_image_publish: docker_image
 	@docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWD}" "${DOCKER_REPO_HOST}"
-	echo tag obsync:$(VERSION) ${DOCKER_REPO_HOST}/${DOCKER_REPO_NAME}:$(VERSION)
-	#echo push ${DOCKER_REPO}/${DOCKER_REPO_NAME}:$(VERSION)
+	@docker tag obsync:$(VERSION) ${DOCKER_REPO_HOST}/${DOCKER_REPO_NAME}:$(VERSION)
+	@docker push ${DOCKER_REPO_HOST}/${DOCKER_REPO_NAME}:$(VERSION)
 
 clean:
 	@$(GO) clean ./...
