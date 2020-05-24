@@ -20,11 +20,14 @@ steps:
     commands:
       - make clean build
       - ./target/obsync -v
+trigger:
+  branch:
+    - develop
 
 ---
 kind: pipeline
 type: exec
-name: build_and_run_on_linux
+name: build_and_publish_docker_images
 
 platform:
   os: linux
@@ -34,5 +37,7 @@ steps:
       GOPROXY: https://goproxy.cn
       GOOS: linux
     commands:
-      - make docker_image
-      - docker run --rm  obsync:`date +%Y%m%d` -v
+      - make docker_image_publish
+trigger:
+  branch:
+    - master
