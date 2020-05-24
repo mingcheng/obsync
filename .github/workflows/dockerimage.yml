@@ -7,12 +7,16 @@ on:
     branches: [ master ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag obsync:$(date +%s)
+      - uses: actions/checkout@v2
+      - name: Build the Docker image and Publish to Huawei Cloud
+        run: make docker_image_publish
+        env:
+          DOCKER_REPO_NAME: mingcheng/obsync
+          DOCKER_REPO_HOST: swr.la-south-2.myhuaweicloud.com
+          DOCKER_PASSWD:
+            from_secret: ${{ secrets.docker_password }}
+          DOCKER_USER:
+            from_secret: ${{ secrets.docker_username }}
