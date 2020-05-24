@@ -23,6 +23,7 @@ import (
 	"github.com/mingcheng/obsync.go"
 	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
 	"github.com/mingcheng/obsync.go/util"
+	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -58,16 +59,16 @@ func main() {
 	flag.Parse()
 
 	// detect pid file exists, and generate pid file
-	// pid, err := pidfile.New(*pidFilePath)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return
-	// }
-	//
-	// defer pid.Remove()
-	// if config.Debug {
-	// 	log.Println(pid)
-	// }
+	pid, err := pidfile.New(*pidFilePath)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer pid.Remove()
+	if config.Debug {
+		log.Println(pid)
+	}
 
 	// print version and exit
 	if *printVersion {
