@@ -36,6 +36,12 @@ steps:
     environment:
       GOPROXY: https://goproxy.cn
       GOOS: linux
+      DOCKER_PASSWD:
+        from_secret: DOCKER_PASSWD
+      DOCKER_USER:
+        from_secret: DOCKER_USER
+      DOCKER_REPO:
+        from_secret: DOCKER_REPO
     commands:
       - env
       - make docker_image_publish
