@@ -3,7 +3,7 @@
 # Author: Ming Cheng<mingcheng@outlook.com>
 #
 # Created Date: Monday, March 9th 2020, 5:11:52 pm
-# Last Modified: Wednesday, May 20th 2020, 8:07:10 am
+# Last Modified: Sunday, May 24th 2020, 10:11:26 pm
 #
 # http://www.opensource.org/licenses/MIT
 ###
@@ -36,12 +36,13 @@ steps:
     environment:
       GOPROXY: https://goproxy.cn
       GOOS: linux
+      DOCKER_REPO_NAME: mingcheng/obsync
       DOCKER_PASSWD:
-        from_secret: DOCKER_PASSWD
+        from_secret: docker_password
       DOCKER_USER:
-        from_secret: DOCKER_USER
-      DOCKER_REPO:
-        from_secret: DOCKER_REPO
+        from_secret: docker_username
+      DOCKER_REPO_HOST:
+        from_secret: docker_repo_host
     commands:
       - env
       - make docker_image_publish
