@@ -1,3 +1,15 @@
+// Copyright 2019 Huawei Technologies Co.,Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License.  You may obtain a copy of the
+// License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations under the License.
+
 package obs
 
 import (
@@ -18,6 +30,7 @@ type ObsClient struct {
 func New(ak, sk, endpoint string, configurers ...configurer) (*ObsClient, error) {
 	conf := &config{securityProvider: &securityProvider{ak: ak, sk: sk}, endpoint: endpoint}
 	conf.maxRetryCount = -1
+	conf.maxRedirectCount = -1
 	for _, configurer := range configurers {
 		configurer(conf)
 	}
@@ -294,13 +307,18 @@ func (obsClient ObsClient) getBucketAclObs(bucketName string) (output *GetBucket
 		output = nil
 	} else {
 		output.BaseModel = outputObs.BaseModel
-		for i, valGrant := range outputObs.Grants {
-			output.Grants[i].Delivered = valGrant.Delivered
-			output.Grants[i].Permission = valGrant.Permission
-			output.Grants[i].Grantee.DisplayName = valGrant.Grantee.DisplayName
-			output.Grants[i].Grantee.ID = valGrant.Grantee.ID
-			output.Grants[i].Grantee.Type = valGrant.Grantee.Type
-			output.Grants[i].Grantee.URI = GroupAllUsers
+		output.Owner = outputObs.Owner
+		output.Grants = make([]Grant, 0, len(outputObs.Grants))
+		for _, valGrant := range outputObs.Grants {
+			tempOutput := Grant{}
+			tempOutput.Delivered = valGrant.Delivered
+			tempOutput.Permission = valGrant.Permission
+			tempOutput.Grantee.DisplayName = valGrant.Grantee.DisplayName
+			tempOutput.Grantee.ID = valGrant.Grantee.ID
+			tempOutput.Grantee.Type = valGrant.Grantee.Type
+			tempOutput.Grantee.URI = GroupAllUsers
+
+			output.Grants = append(output.Grants, tempOutput)
 		}
 	}
 	return
@@ -660,11 +678,11 @@ func (obsClient ObsClient) PutObject(input *PutObjectInput) (output *PutObjectOu
 	}
 
 	if input.ContentType == "" && input.Key != "" {
-		if contentType, ok := mime_types[input.Key[strings.LastIndex(input.Key, ".")+1:]]; ok {
+		if contentType, ok := mime_types[strings.ToLower(input.Key[strings.LastIndex(input.Key, ".")+1:])]; ok {
 			input.ContentType = contentType
 		}
 	}
-
+	
 	output = &PutObjectOutput{}
 	var repeatable bool
 	if input.Body != nil {
@@ -686,6 +704,23 @@ func (obsClient ObsClient) PutObject(input *PutObjectInput) (output *PutObjectOu
 	return
 }
 
+func (obsClient ObsClient) getContentType(input *PutObjectInput, sourceFile string) (contentType string){
+	if contentType, ok := mime_types[strings.ToLower(input.Key[strings.LastIndex(input.Key, ".")+1:])]; ok {
+		return contentType
+	}
+	if contentType, ok := mime_types[strings.ToLower(sourceFile[strings.LastIndex(sourceFile, ".")+1:])]; ok {
+		return contentType
+	}
+	return
+}
+
+func (ObsClient ObsClient) isGetContentType(input *PutObjectInput) bool{
+	if input.ContentType == "" && input.Key != ""{
+		return true
+	}
+	return false
+}
+
 func (obsClient ObsClient) PutFile(input *PutFileInput) (output *PutObjectOutput, err error) {
 	if input == nil {
 		return nil, errors.New("PutFileInput is nil")
@@ -694,14 +729,21 @@ func (obsClient ObsClient) PutFile(input *PutFileInput) (output *PutObjectOutput
 	var body io.Reader
 	sourceFile := strings.TrimSpace(input.SourceFile)
 	if sourceFile != "" {
-		fd, err := os.Open(sourceFile)
-		if err != nil {
+		fd, _err := os.Open(sourceFile)
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
-		defer fd.Close()
+		defer func(){
+			errMsg := fd.Close()
+			if errMsg != nil{
+				doLog(LEVEL_WARN, "Failed to close file with reason: %v", errMsg)
+			}
+		}()
 
-		stat, err := fd.Stat()
-		if err != nil {
+		stat, _err := fd.Stat()
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
 		fileReaderWrapper := &fileReaderWrapper{filePath: sourceFile}
@@ -721,12 +763,8 @@ func (obsClient ObsClient) PutFile(input *PutFileInput) (output *PutObjectOutput
 	_input.PutObjectBasicInput = input.PutObjectBasicInput
 	_input.Body = body
 
-	if _input.ContentType == "" && _input.Key != "" {
-		if contentType, ok := mime_types[_input.Key[strings.LastIndex(_input.Key, ".")+1:]]; ok {
-			_input.ContentType = contentType
-		} else if contentType, ok := mime_types[sourceFile[strings.LastIndex(sourceFile, ".")+1:]]; ok {
-			_input.ContentType = contentType
-		}
+	if obsClient.isGetContentType(_input) {
+		_input.ContentType = obsClient.getContentType(_input, sourceFile)
 	}
 
 	output = &PutObjectOutput{}
@@ -782,7 +820,7 @@ func (obsClient ObsClient) InitiateMultipartUpload(input *InitiateMultipartUploa
 	}
 
 	if input.ContentType == "" && input.Key != "" {
-		if contentType, ok := mime_types[input.Key[strings.LastIndex(input.Key, ".")+1:]]; ok {
+		if contentType, ok := mime_types[strings.ToLower(input.Key[strings.LastIndex(input.Key, ".")+1:])]; ok {
 			input.ContentType = contentType
 		}
 	}
@@ -797,14 +835,27 @@ func (obsClient ObsClient) InitiateMultipartUpload(input *InitiateMultipartUploa
 	return
 }
 
-func (obsClient ObsClient) UploadPart(input *UploadPartInput) (output *UploadPartOutput, err error) {
-	if input == nil {
+func (obsClient ObsClient) UploadPart(_input *UploadPartInput) (output *UploadPartOutput, err error) {
+	if _input == nil {
 		return nil, errors.New("UploadPartInput is nil")
 	}
 
-	if input.UploadId == "" {
+	if _input.UploadId == "" {
 		return nil, errors.New("UploadId is empty")
 	}
+
+	input := &UploadPartInput{}
+	input.Bucket = _input.Bucket
+	input.Key = _input.Key
+	input.PartNumber = _input.PartNumber
+	input.UploadId = _input.UploadId
+	input.ContentMD5 = _input.ContentMD5
+	input.SourceFile = _input.SourceFile
+	input.Offset = _input.Offset
+	input.PartSize = _input.PartSize
+	input.SseHeader = _input.SseHeader
+	input.Body = _input.Body
+
 
 	output = &UploadPartOutput{}
 	var repeatable bool
@@ -814,14 +865,21 @@ func (obsClient ObsClient) UploadPart(input *UploadPartInput) (output *UploadPar
 			input.Body = &readerWrapper{reader: input.Body, totalCount: input.PartSize}
 		}
 	} else if sourceFile := strings.TrimSpace(input.SourceFile); sourceFile != "" {
-		fd, err := os.Open(sourceFile)
-		if err != nil {
+		fd, _err := os.Open(sourceFile)
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
-		defer fd.Close()
+		defer func(){
+			errMsg := fd.Close()
+			if errMsg != nil{
+				doLog(LEVEL_WARN, "Failed to close file with reason: %v", errMsg)
+			}
+		}()
 
-		stat, err := fd.Stat()
-		if err != nil {
+		stat, _err := fd.Stat()
+		if _err != nil {
+			err = _err
 			return nil, err
 		}
 		fileSize := stat.Size()
@@ -836,7 +894,9 @@ func (obsClient ObsClient) UploadPart(input *UploadPartInput) (output *UploadPar
 			input.PartSize = fileSize - input.Offset
 		}
 		fileReaderWrapper.totalCount = input.PartSize
-		fd.Seek(input.Offset, 0)
+		if _, err = fd.Seek(input.Offset, io.SeekStart);err != nil{
+			return nil, err
+		}
 		input.Body = fileReaderWrapper
 		repeatable = true
 	}

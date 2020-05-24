@@ -1,0 +1,38 @@
+###
+# File: .drone.yml
+# Author: Ming Cheng<mingcheng@outlook.com>
+#
+# Created Date: Monday, March 9th 2020, 5:11:52 pm
+# Last Modified: Wednesday, May 20th 2020, 8:07:10 am
+#
+# http://www.opensource.org/licenses/MIT
+###
+
+kind: pipeline
+type: docker
+name: build_and_run_on_docker
+
+steps:
+  - name: build
+    image: golang:1.13.11
+    environment:
+      GOPROXY: https://goproxy.cn
+    commands:
+      - make clean build
+      - ./target/obsync -v
+
+---
+kind: pipeline
+type: exec
+name: build_and_run_on_linux
+
+platform:
+  os: linux
+steps:
+  - name: build
+    environment:
+      GOPROXY: https://goproxy.cn
+      GOOS: linux
+    commands:
+      - make docker_image
+      - docker run --rm  obsync:`date +%Y%m%d` -v

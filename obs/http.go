@@ -1,3 +1,15 @@
+// Copyright 2019 Huawei Technologies Co.,Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License.  You may obtain a copy of the
+// License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations under the License.
+
 package obs
 
 import (
@@ -83,7 +95,10 @@ func (obsClient ObsClient) doAction(action, method, bucketName, objectKey string
 	doLog(LEVEL_INFO, "Enter method %s...", action)
 	start := GetCurrentTimestamp()
 
-	params, headers, data := input.trans(obsClient.conf.signature == SignatureObs)
+	params, headers, data, err := input.trans(obsClient.conf.signature == SignatureObs)
+	if err != nil{
+		return err
+	}
 	if params == nil {
 		params = make(map[string]string)
 	}
@@ -118,7 +133,7 @@ func (obsClient ObsClient) doAction(action, method, bucketName, objectKey string
 	}
 
 	if isDebugLogEnabled() {
-		doLog(LEVEL_DEBUG, "End method %s, obsclient cost %d ms", action, GetCurrentTimestamp()-start)
+		doLog(LEVEL_DEBUG, "End method %s, obsclient cost %d ms", action, (GetCurrentTimestamp() - start))
 	}
 
 	return respError
@@ -187,7 +202,7 @@ func (obsClient ObsClient) doHttpWithSignedUrl(action, method string, signedUrl 
 	start := GetCurrentTimestamp()
 	resp, err = obsClient.httpClient.Do(req)
 	if isInfoLogEnabled() {
-		doLog(LEVEL_INFO, "Do http request cost %d ms", GetCurrentTimestamp()-start)
+		doLog(LEVEL_INFO, "Do http request cost %d ms", (GetCurrentTimestamp() - start))
 	}
 
 	var msg interface{}
@@ -215,7 +230,7 @@ func (obsClient ObsClient) doHttpWithSignedUrl(action, method string, signedUrl 
 	}
 
 	if isDebugLogEnabled() {
-		doLog(LEVEL_DEBUG, "End method %s, obsclient cost %d ms", action, GetCurrentTimestamp()-start)
+		doLog(LEVEL_DEBUG, "End method %s, obsclient cost %d ms", action, (GetCurrentTimestamp() - start))
 	}
 
 	return
@@ -231,6 +246,7 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 	var redirectUrl string
 	var requestUrl string
 	maxRetryCount := obsClient.conf.maxRetryCount
+	maxRedirectCount := obsClient.conf.maxRedirectCount
 
 	var _data io.Reader
 	if data != nil {
@@ -251,15 +267,23 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 	}
 
 	var lastRequest *http.Request
-	for i := 0; i <= maxRetryCount; i++ {
+	redirectFlag := false
+	for i, redirectCount := 0, 0; i <= maxRetryCount; i++ {
 		if redirectUrl != "" {
-			parsedRedirectUrl, err := url.Parse(redirectUrl)
-			if err != nil {
-				return nil, err
-			}
-			requestUrl, _ = obsClient.doAuth(method, bucketName, objectKey, params, headers, parsedRedirectUrl.Host)
-			if parsedRequestUrl, _ := url.Parse(requestUrl); parsedRequestUrl.RawQuery != "" && parsedRedirectUrl.RawQuery == "" {
-				redirectUrl += "?" + parsedRequestUrl.RawQuery
+			if !redirectFlag{
+				parsedRedirectUrl, err := url.Parse(redirectUrl)
+				if err != nil {
+					return nil, err
+				}
+				requestUrl, err = obsClient.doAuth(method, bucketName, objectKey, params, headers, parsedRedirectUrl.Host)
+				if err != nil{
+					return nil, err
+				}
+				if parsedRequestUrl, err := url.Parse(requestUrl); err != nil{
+					return nil, err
+				}else if parsedRequestUrl.RawQuery != "" && parsedRedirectUrl.RawQuery == "" {
+					redirectUrl += "?" + parsedRequestUrl.RawQuery
+				}
 			}
 			requestUrl = redirectUrl
 		} else {
@@ -310,7 +334,7 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 		start := GetCurrentTimestamp()
 		resp, err = obsClient.httpClient.Do(req)
 		if isInfoLogEnabled() {
-			doLog(LEVEL_INFO, "Do http request cost %d ms", GetCurrentTimestamp()-start)
+			doLog(LEVEL_INFO, "Do http request cost %d ms", (GetCurrentTimestamp() - start))
 		}
 
 		var msg interface{}
@@ -330,11 +354,17 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 				resp = nil
 				break
 			} else if resp.StatusCode >= 300 && resp.StatusCode < 400 {
-				if location := resp.Header.Get(HEADER_LOCATION_CAMEL); location != "" {
+				if location := resp.Header.Get(HEADER_LOCATION_CAMEL); location != "" && redirectCount < maxRedirectCount{
 					redirectUrl = location
 					doLog(LEVEL_WARN, "Redirect request to %s", redirectUrl)
 					msg = resp.Status
 					maxRetryCount++
+					redirectCount++
+					if resp.StatusCode == 302 && method == HTTP_GET{
+						redirectFlag = true
+					}else{
+						redirectFlag = false
+					}
 				} else {
 					respError = ParseResponseToObsError(resp, obsClient.conf.signature == SignatureObs)
 					resp = nil
@@ -346,7 +376,10 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 		}
 		if i != maxRetryCount {
 			if resp != nil {
-				resp.Body.Close()
+				_err := resp.Body.Close()
+				if _err != nil{
+					doLog(LEVEL_WARN, "Failed to close resp body with reason: %v", _err)
+				}
 				resp = nil
 			}
 			if _, ok := headers[HEADER_AUTH_CAMEL]; ok {
@@ -368,7 +401,12 @@ func (obsClient ObsClient) doHttp(method, bucketName, objectKey string, params m
 				if err != nil {
 					return nil, err
 				}
-				defer fd.Close()
+				defer func(){
+					errMsg := fd.Close()
+					if errMsg != nil{
+						doLog(LEVEL_WARN, "Failed to close with reason: %v", errMsg)
+					}
+				}()
 				fileReaderWrapper := &fileReaderWrapper{filePath: r.filePath}
 				fileReaderWrapper.mark = r.mark
 				fileReaderWrapper.reader = fd
@@ -411,18 +449,38 @@ func getConnDelegate(conn net.Conn, socketTimeout int, finalTimeout int) *connDe
 }
 
 func (delegate *connDelegate) Read(b []byte) (n int, err error) {
-	delegate.SetReadDeadline(time.Now().Add(delegate.socketTimeout))
+	setReadDeadlineErr := delegate.SetReadDeadline(time.Now().Add(delegate.socketTimeout))
+	flag := isDebugLogEnabled()
+
+	if setReadDeadlineErr != nil && flag {
+		doLog(LEVEL_DEBUG, "Failed to set read deadline with reason: %v, but it's ok", setReadDeadlineErr)
+	}
+
 	n, err = delegate.conn.Read(b)
-	delegate.SetReadDeadline(time.Now().Add(delegate.finalTimeout))
+	setReadDeadlineErr = delegate.SetReadDeadline(time.Now().Add(delegate.finalTimeout))
+	if setReadDeadlineErr != nil && flag {
+		doLog(LEVEL_DEBUG, "Failed to set read deadline with reason: %v, but it's ok", setReadDeadlineErr)
+	}
 	return n, err
 }
 
 func (delegate *connDelegate) Write(b []byte) (n int, err error) {
-	delegate.SetWriteDeadline(time.Now().Add(delegate.socketTimeout))
+	setWriteDeadlineErr := delegate.SetWriteDeadline(time.Now().Add(delegate.socketTimeout))
+	flag := isDebugLogEnabled()
+	if setWriteDeadlineErr != nil && flag {
+		doLog(LEVEL_DEBUG, "Failed to set write deadline with reason: %v, but it's ok", setWriteDeadlineErr)
+	}
+
 	n, err = delegate.conn.Write(b)
 	finalTimeout := time.Now().Add(delegate.finalTimeout)
-	delegate.SetWriteDeadline(finalTimeout)
-	delegate.SetReadDeadline(finalTimeout)
+	setWriteDeadlineErr = delegate.SetWriteDeadline(finalTimeout)
+	if setWriteDeadlineErr != nil && flag {
+		doLog(LEVEL_DEBUG, "Failed to set write deadline with reason: %v, but it's ok", setWriteDeadlineErr)
+	}
+	setReadDeadlineErr := delegate.SetReadDeadline(finalTimeout)
+	if setReadDeadlineErr != nil && flag {
+		doLog(LEVEL_DEBUG, "Failed to set read deadline with reason: %v, but it's ok", setReadDeadlineErr)
+	}
 	return n, err
 }
 

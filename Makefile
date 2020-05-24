@@ -40,7 +40,7 @@ dist: clean
 release:
 	@goreleaser --rm-dist
 
-docker_image: clean
+docker_image:
 	@docker build -f ./Dockerfile -t obsync:$(VERSION) .
 
 clean:

@@ -1,11 +1,13 @@
 {
-  "debug": false,
-  "force": false,
+  "debug": true,
   "root": ".",
-  "secret": "<secret>",
-  "key": "<key>",
-  "endpoint": "<endpoint>",
-  "bucket": "<bucket-name>",
-  "timeout": 30,
-  "thread": 5
+  "buckets": [
+    {
+      "type": "test",
+      "thread": 5,
+      "name": "test",
+      "timeout": 10,
+      "force": true
+    }
+  ]
 }
