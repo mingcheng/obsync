@@ -16,7 +16,5 @@ jobs:
         env:
           DOCKER_REPO_NAME: mingcheng/obsync
           DOCKER_REPO_HOST: swr.la-south-2.myhuaweicloud.com
-          DOCKER_PASSWD:
-            from_secret: ${{ secrets.docker_password }}
-          DOCKER_USER:
-            from_secret: ${{ secrets.docker_username }}
+          DOCKER_PASSWD: ${{ secrets.docker_password }}
+          DOCKER_USER: ${{ secrets.docker_username }}
