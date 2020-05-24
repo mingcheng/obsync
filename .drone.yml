@@ -21,19 +21,18 @@ steps:
       - make clean build
       - ./target/obsync -v
 
-  ----
+---
+kind: pipeline
+type: exec
+name: build_and_run_on_linux
 
-  kind: pipeline
-  type: exec
-  name: build_and_run_on_linux
-
-  platform:
-    os: linux
-  steps:
-    - name: build
-      environment:
-        GOPROXY: https://goproxy.cn
-        GOOS: linux
-      commands:
-        - make docker_image
-        - docker run --rm  obsync:`date +%Y%m%d` -v
+platform:
+  os: linux
+steps:
+  - name: build
+    environment:
+      GOPROXY: https://goproxy.cn
+      GOOS: linux
+    commands:
+      - make docker_image
+      - docker run --rm  obsync:`date +%Y%m%d` -v
