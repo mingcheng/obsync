@@ -98,16 +98,23 @@ func GetBucketInfo() ([]interface{}, error) {
 }
 
 // RunTasks run all tasks
-func RunTasks(ctx context.Context, t []BucketTask) {
+func AddTasks(t []BucketTask) {
 	for _, runner := range runners {
-		runner.RunAll(ctx, t)
+		runner.AddTasks(t)
 	}
 }
 
-// Wait block when all runner is running
-func Wait() {
+// Observe to observe tasks and run
+func Observe(ctx context.Context) {
 	for _, runner := range runners {
-		runner.Wait()
+		runner.Observe(ctx)
+	}
+}
+
+// StopObserve to stopping all runner's observe one func
+func StopObserve() {
+	for _, runner := range runners {
+		runner.StopObserve()
 	}
 }
 

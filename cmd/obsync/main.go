@@ -23,7 +23,6 @@ import (
 	"github.com/mingcheng/obsync.go"
 	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
 	"github.com/mingcheng/obsync.go/util"
-	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -59,16 +58,16 @@ func main() {
 	flag.Parse()
 
 	// detect pid file exists, and generate pid file
-	pid, err := pidfile.New(*pidFilePath)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	defer pid.Remove()
-	if config.Debug {
-		log.Println(pid)
-	}
+	// pid, err := pidfile.New(*pidFilePath)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
+	//
+	// defer pid.Remove()
+	// if config.Debug {
+	// 	log.Println(pid)
+	// }
 
 	// print version and exit
 	if *printVersion {
@@ -112,34 +111,48 @@ func main() {
 		log.Printf("root path is %s\n", config.Root)
 	}
 
-	dur, err := time.ParseDuration(config.Interval)
-	if err != nil {
-		panic(err)
-	}
-	dur.Hours()
-	// get all obs tasks and put
+	go func() {
+		sig := make(chan os.Signal)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
 
-	if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
-		log.Println(err)
-	} else {
-		go func() {
-			sig := make(chan os.Signal)
-			signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-
-			for s := range sig {
-				switch s {
-				default:
-					// config.Standalone = false
-					log.Println("caught signal, stopping all tasks")
-					os.Exit(0)
-				}
+		for s := range sig {
+			switch s {
+			default:
+				log.Println("caught signal, stopping all tasks")
+				os.Exit(0)
 			}
-		}()
+		}
+	}()
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	// root context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		obsync.RunTasks(ctx, tasks)
-		obsync.Wait()
+	// start observe
+	go obsync.Observe(ctx)
+	defer obsync.StopObserve()
+
+	// start ticker to running tasks
+	standbyDuration := time.Duration(config.Interval) * time.Hour
+	ticker := time.NewTicker(standbyDuration)
+	defer ticker.Stop()
+
+	for ; true; <-ticker.C {
+		// get all obs tasks and put
+		if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
+			log.Printf("director %v is empty, caught %v", config.Root, err)
+			return
+		} else {
+			// if anything is fine, add tasks to runners
+			obsync.AddTasks(tasks)
+		}
+
+		// detect whether is standalone
+		if config.Standalone {
+			log.Printf("standalone mode, duration %v", standbyDuration)
+		} else {
+			log.Println("obsync is not configured in standalone mode, quiting")
+			return
+		}
 	}
 }

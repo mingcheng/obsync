@@ -14,19 +14,18 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 )
 
 // BucketRunner provides runner struct
 type BucketRunner struct {
-	Type     string
-	Client   Bucket
-	Config   BucketConfig
-	Context  *context.Context
-	wg       *sync.WaitGroup
-	taskChan chan BucketTask
-	Debug    bool
+	Type      string
+	Client    Bucket
+	Config    BucketConfig
+	Context   *context.Context
+	taskChan  chan BucketTask
+	observing chan bool
+	Debug     bool
 }
 
 // Info get bucket runnner info
@@ -34,12 +33,14 @@ func (b BucketRunner) Info() (interface{}, error) {
 	return b.Client.Info()
 }
 
-// RunAll process all tasks
-func (b BucketRunner) RunAll(ctx context.Context, tasks []BucketTask) {
+// AddTasks process all tasks
+func (b BucketRunner) AddTasks(tasks []BucketTask) {
 	if _, err := b.Info(); err != nil {
 		if b.Debug {
 			log.Printf("check status with error: %s", err)
 		}
+
+		return
 	}
 
 	if len(tasks) <= 0 {
@@ -49,26 +50,33 @@ func (b BucketRunner) RunAll(ctx context.Context, tasks []BucketTask) {
 		}
 
 		return
-	} else if b.Debug {
+	}
+
+	if b.Debug {
 		log.Printf("total tasks are %d", len(tasks))
 	}
 
-	go func() {
-		var i = 0
-		for i < len(tasks) {
-			task := <-b.taskChan
+	// process tasks without any error
+	for _, task := range tasks {
+		b.taskChan <- task
+	}
+}
+
+func (b BucketRunner) Observe(ctx context.Context) {
+	defer close(b.taskChan)
+	for {
+		select {
+		case task := <-b.taskChan:
 			if err := b.Run(ctx, task); err != nil && b.Debug {
 				log.Println(err)
 			}
-			b.wg.Done()
-			i++
-		}
-	}()
 
-	// process tasks without any error
-	b.wg.Add(len(tasks))
-	for _, task := range tasks {
-		b.taskChan <- task
+		case observing := <-b.observing:
+			if !observing {
+				log.Printf("%s | %s | %s", b.Config.Name, b.Type, "stop sbserving")
+				return
+			}
+		}
 	}
 }
 
@@ -103,20 +111,20 @@ func (b BucketRunner) Run(ctx context.Context, task BucketTask) error {
 	}
 }
 
-// Wait block when process task
-func (b BucketRunner) Wait() {
-	b.wg.Wait()
+// StopObserve to stopping observe
+func (b BucketRunner) StopObserve() {
+	b.observing <- false
 }
 
 // NewBucketTask get new task instance
 func NewBucketTask(typeName string, client Bucket, config BucketConfig, debug bool) (BucketRunner, error) {
 	runner := BucketRunner{
-		taskChan: make(chan BucketTask, config.Thread),
-		wg:       &sync.WaitGroup{},
-		Type:     typeName,
-		Client:   client,
-		Config:   config,
-		Debug:    debug,
+		taskChan:  make(chan BucketTask, config.Thread),
+		observing: make(chan bool),
+		Type:      typeName,
+		Client:    client,
+		Config:    config,
+		Debug:     debug,
 	}
 
 	return runner, nil

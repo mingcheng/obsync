@@ -13,7 +13,7 @@ type Config struct {
 	Force      bool                  `json:"force"`
 	Root       string                `json:"root"`
 	Standalone bool                  `json:"standalone"`
-	Interval   string                `json:"interval"`
+	Interval   uint                  `json:"interval"`
 	Buckets    []obsync.BucketConfig `json:"buckets"`
 }
 
