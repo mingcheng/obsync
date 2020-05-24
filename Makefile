@@ -43,6 +43,11 @@ release:
 docker_image:
 	@docker build -f ./Dockerfile -t obsync:$(VERSION) .
 
+docker_image_publish: docker_image
+	@docker login -u $DOCKER_USER -p $DOCKER_PASSWD $DOCKER_REPO
+	@docker tag obsync:$(VERSION) $DOCKER_REPO/mingcheng/obsync:$(VERSION)
+	@docker push $DOCKER_REPO/mingcheng/obsync:$(VERSION)
+
 clean:
 	@$(GO) clean ./...
 	@rm -rf ./target/*
