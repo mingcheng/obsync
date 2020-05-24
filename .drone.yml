@@ -7,7 +7,7 @@
 #
 # http://www.opensource.org/licenses/MIT
 ###
----
+
 kind: pipeline
 type: docker
 name: build_and_run_on_docker
