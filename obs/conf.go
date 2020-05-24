@@ -1,3 +1,15 @@
+// Copyright 2019 Huawei Technologies Co.,Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License.  You may obtain a copy of the
+// License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations under the License.
+
 package obs
 
 import (
@@ -30,9 +42,11 @@ type urlHolder struct {
 type config struct {
 	securityProvider *securityProvider
 	urlHolder        *urlHolder
+	pathStyle        bool
+	cname            bool
+	sslVerify        bool
 	endpoint         string
 	signature        SignatureType
-	pathStyle        bool
 	region           string
 	connectTimeout   int
 	socketTimeout    int
@@ -42,20 +56,19 @@ type config struct {
 	maxRetryCount    int
 	proxyUrl         string
 	maxConnsPerHost  int
-	sslVerify        bool
 	pemCerts         []byte
 	transport        *http.Transport
 	ctx              context.Context
-	cname            bool
+	maxRedirectCount int
 }
 
 func (conf config) String() string {
 	return fmt.Sprintf("[endpoint:%s, signature:%s, pathStyle:%v, region:%s"+
 		"\nconnectTimeout:%d, socketTimeout:%dheaderTimeout:%d, idleConnTimeout:%d"+
-		"\nmaxRetryCount:%d, maxConnsPerHost:%d, sslVerify:%v, proxyUrl:%s]",
+		"\nmaxRetryCount:%d, maxConnsPerHost:%d, sslVerify:%v, proxyUrl:%s, maxRedirectCount:%d]",
 		conf.endpoint, conf.signature, conf.pathStyle, conf.region,
 		conf.connectTimeout, conf.socketTimeout, conf.headerTimeout, conf.idleConnTimeout,
-		conf.maxRetryCount, conf.maxConnsPerHost, conf.sslVerify, conf.proxyUrl,
+		conf.maxRetryCount, conf.maxConnsPerHost, conf.sslVerify, conf.proxyUrl, conf.maxRedirectCount, 
 	)
 }
 
@@ -156,6 +169,13 @@ func WithCustomDomainName(cname bool) configurer {
 	}
 }
 
+func WithMaxRedirectCount(maxRedirectCount int) configurer {
+	return func(conf *config) {
+		conf.maxRedirectCount = maxRedirectCount
+	}
+}
+
+
 func (conf *config) initConfigWithDefault() error {
 	conf.securityProvider.ak = strings.TrimSpace(conf.securityProvider.ak)
 	conf.securityProvider.sk = strings.TrimSpace(conf.securityProvider.sk)
@@ -240,6 +260,10 @@ func (conf *config) initConfigWithDefault() error {
 
 	if conf.maxConnsPerHost <= 0 {
 		conf.maxConnsPerHost = DEFAULT_MAX_CONN_PER_HOST
+	}
+
+	if conf.maxRedirectCount < 0 {
+		conf.maxRedirectCount = DEFAULT_MAX_REDIRECT_COUNT
 	}
 
 	conf.proxyUrl = strings.TrimSpace(conf.proxyUrl)
@@ -327,7 +351,21 @@ func (conf *config) formatUrls(bucketName, objectKey string, params map[string]s
 	}
 
 	if objectKey != "" {
-		encodeObjectKey := escapeFunc(objectKey)
+		var encodeObjectKey string
+		if escape{
+			tempKey := []rune(objectKey)
+			result := make([]string, 0, len(tempKey))
+			for _, value:=range tempKey{
+				if string(value) == "/"{
+					result = append(result, string(value))
+				}else{
+					result = append(result, url.QueryEscape(string(value)))
+				}
+			}
+			encodeObjectKey = strings.Join(result,"")
+		}else{
+			encodeObjectKey = escapeFunc(objectKey)
+		}
 		requestUrl += "/" + encodeObjectKey
 		if !strings.HasSuffix(canonicalizedUrl, "/") {
 			canonicalizedUrl += "/"
