@@ -58,6 +58,12 @@ func main() {
 	// parse command line
 	flag.Parse()
 
+	// print version and exit
+	if *printVersion {
+		flag.Usage()
+		return
+	}
+
 	// detect pid file exists, and generate pid file
 	pid, err := pidfile.New(*pidFilePath)
 	if err != nil {
@@ -68,12 +74,6 @@ func main() {
 	defer pid.Remove()
 	if config.Debug {
 		log.Println(pid)
-	}
-
-	// print version and exit
-	if *printVersion {
-		flag.Usage()
-		return
 	}
 
 	// detect config file path
