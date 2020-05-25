@@ -39,7 +39,7 @@ type BucketTask struct {
 type Bucket interface {
 	Info() (interface{}, error)
 	Exists(path string) bool
-	Put(task BucketTask)
+	Put(task BucketTask) error
 }
 
 var (

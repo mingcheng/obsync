@@ -26,18 +26,22 @@ type OBSBucket struct {
 }
 
 // Put a file to obs bucket
-func (o *OBSBucket) Put(task obsync.BucketTask) {
+func (o *OBSBucket) Put(task obsync.BucketTask) error {
 	input := &obs.PutFileInput{}
 	input.Bucket = o.Config.Name
 	input.Key = task.Key
 	input.SourceFile = task.Local
 
 	log.Printf("start upload %s to obs", task.Key)
-	if output, err := o.Client.PutFile(input); err != nil {
+	output, err := o.Client.PutFile(input)
+
+	if err != nil {
 		log.Println(err)
-	} else {
-		log.Printf("put %s with out error, status code %d", task.Key, output.StatusCode)
+		return err
 	}
+
+	log.Printf("put %s with out error, status code %d", task.Key, output.StatusCode)
+	return nil
 }
 
 // Exists detect object whether exists

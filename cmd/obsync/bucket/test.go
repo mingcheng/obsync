@@ -29,8 +29,9 @@ func (t TestBucket) Exists(path string) bool {
 	return false
 }
 
-func (t TestBucket) Put(task obsync.BucketTask) {
+func (t TestBucket) Put(task obsync.BucketTask) error {
 	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
+	return nil
 }
 
 func init() {
