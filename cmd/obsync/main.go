@@ -131,7 +131,7 @@ func main() {
 
 	// start observe
 	go obsync.Observe(ctx)
-	defer obsync.StopObserve()
+	defer obsync.Stop()
 
 	// start ticker to running tasks
 	standbyDuration := time.Duration(config.Interval) * time.Hour

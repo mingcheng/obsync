@@ -107,14 +107,14 @@ func AddTasks(t []BucketTask) {
 // Observe to observe tasks and run
 func Observe(ctx context.Context) {
 	for _, runner := range runners {
-		runner.Observe(ctx)
+		go runner.Observe(ctx)
 	}
 }
 
-// StopObserve to stopping all runner's observe one func
-func StopObserve() {
+// Stop observing
+func Stop() {
 	for _, runner := range runners {
-		runner.StopObserve()
+		runner.Stop()
 	}
 }
 

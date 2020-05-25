@@ -22,7 +22,6 @@ type BucketRunner struct {
 	Type      string
 	Client    Bucket
 	Config    BucketConfig
-	Context   *context.Context
 	taskChan  chan BucketTask
 	observing chan bool
 	Debug     bool
@@ -111,8 +110,12 @@ func (b BucketRunner) Run(ctx context.Context, task BucketTask) error {
 	}
 }
 
-// StopObserve to stopping observe
-func (b BucketRunner) StopObserve() {
+// Stop to stopping observe
+func (b BucketRunner) Stop() {
+	if b.Debug {
+		log.Printf("%v stop observing", b.Config.Name)
+	}
+
 	b.observing <- false
 }
 
