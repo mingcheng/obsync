@@ -22,8 +22,7 @@ type BucketRunner struct {
 	Type      string
 	Client    Bucket
 	Config    BucketConfig
-	Context   *context.Context
-	taskChan  chan BucketTask
+	taskPool  chan BucketTask
 	observing chan bool
 	Debug     bool
 }
@@ -58,15 +57,15 @@ func (b BucketRunner) AddTasks(tasks []BucketTask) {
 
 	// process tasks without any error
 	for _, task := range tasks {
-		b.taskChan <- task
+		b.taskPool <- task
 	}
 }
 
 func (b BucketRunner) Observe(ctx context.Context) {
-	defer close(b.taskChan)
+	defer close(b.taskPool)
 	for {
 		select {
-		case task := <-b.taskChan:
+		case task := <-b.taskPool:
 			if err := b.Run(ctx, task); err != nil && b.Debug {
 				log.Println(err)
 			}
@@ -111,15 +110,19 @@ func (b BucketRunner) Run(ctx context.Context, task BucketTask) error {
 	}
 }
 
-// StopObserve to stopping observe
-func (b BucketRunner) StopObserve() {
+// Stop to stopping observe
+func (b BucketRunner) Stop() {
+	if b.Debug {
+		log.Printf("%v stop observing", b.Config.Name)
+	}
+
 	b.observing <- false
 }
 
 // NewBucketTask get new task instance
 func NewBucketTask(typeName string, client Bucket, config BucketConfig, debug bool) (BucketRunner, error) {
 	runner := BucketRunner{
-		taskChan:  make(chan BucketTask, config.Thread),
+		taskPool:  make(chan BucketTask, config.Thread),
 		observing: make(chan bool),
 		Type:      typeName,
 		Client:    client,
