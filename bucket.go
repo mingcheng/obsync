@@ -114,7 +114,7 @@ func Observe(ctx context.Context) {
 // Stop observing
 func Stop() {
 	for _, runner := range runners {
-		runner.Stop()
+		go runner.Stop()
 	}
 }
 
