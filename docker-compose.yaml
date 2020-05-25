@@ -1,0 +1,9 @@
+version: "2"
+services:
+  obsync:
+    image: docker.pkg.github.com/mingcheng/obsync/obsync:latest
+    container_name: obsync
+    volumes:
+      - ./obsync.json:/etc/obsync.json:ro
+      - ${HOME}/backups:/backups
+    restart: unless-stopped

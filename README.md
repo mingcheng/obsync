@@ -49,13 +49,15 @@
       "type": "test",
       "thread": 5,
       "name": "test",
-      "timeout": 10,
+      "timeout": 60,
       "force": true
     }
     // ...
   ]
 }
 ```
+
+注意，默认的每个 bucket 的 timeout 时间单位为秒，而 standalone 的 interval 默认单位时间为小时。
 
 支持一对多同步到同一个以及不同的对象存储平台（详细技术细节请查看插件部分）。
 
@@ -75,6 +77,17 @@
 使用 systemd 可以非常方便得在 Linux 系统下管理应用的启动方式。参考文件 `obsync.service` 以及 `obsync.timer` 文件，默认每一个小时重启（扫描一次）应用。
 
 基于用户运行的方式安装，则拷贝上述对应的两个文件到 `$HOME/.config/systemd/user`，同时注意执行文件以及配置文件的路径。然后，刷新 `systemctl --user daemon-reload` 后执行 `systemctl --user start obsync.timer` 即可运行。如想自动启动，则运行 `systemctl --user enable obsync.timer` 即可。
+
+### 使用 Docker 镜像部署
+
+简单的可以使用
+
+```
+docker pull docker.pkg.github.com/mingcheng/obsync/obsync:latest
+```
+
+拉取镜像，默认的配置路径为 `/etc/obsync.json` ，注意进行本地映射以及权限。
+
 
 ## 编写插件
 

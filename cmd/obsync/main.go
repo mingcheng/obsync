@@ -64,18 +64,6 @@ func main() {
 		return
 	}
 
-	// detect pid file exists, and generate pid file
-	pid, err := pidfile.New(*pidFilePath)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	defer pid.Remove()
-	if config.Debug {
-		log.Println(pid)
-	}
-
 	// detect config file path
 	configFilePath, _ := filepath.Abs(*configFilePath)
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
@@ -89,6 +77,20 @@ func main() {
 
 	if config.Debug {
 		log.Println(config)
+	}
+
+	// detect pid file exists, and generate pid file
+	if !config.Standalone {
+		pid, err := pidfile.New(*pidFilePath)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		defer pid.Remove()
+		if config.Debug {
+			log.Println(pid)
+		}
 	}
 
 	// @TODO
@@ -131,9 +133,12 @@ func main() {
 
 	// start observe
 	go obsync.Observe(ctx)
-	defer obsync.StopObserve()
+	defer obsync.Stop()
 
 	// start ticker to running tasks
+	if config.Interval <= 0 {
+		config.Interval = 1
+	}
 	standbyDuration := time.Duration(config.Interval) * time.Hour
 	ticker := time.NewTicker(standbyDuration)
 	defer ticker.Stop()
