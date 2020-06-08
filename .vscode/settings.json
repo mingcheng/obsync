@@ -1,4 +1,7 @@
 {
   "go.buildOnSave": "workspace",
-  "workbench.colorTheme": "Monokai"
+  "workbench.colorTheme": "Monokai",
+  "editor.fontFamily": "Sarasa Mono SC",
+  "editor.fontSize": 14,
+  "debug.console.fontFamily": "default"
 }

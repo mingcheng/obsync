@@ -68,6 +68,8 @@ func (b BucketRunner) Observe(ctx context.Context) {
 		case task := <-b.taskPool:
 			if err := b.Run(ctx, task); err != nil && b.Debug {
 				log.Println(err)
+			} else {
+				log.Printf("%v %v is finished, without any error", task.Key, task.Local)
 			}
 
 		case observing := <-b.observing:
@@ -84,22 +86,26 @@ func (b BucketRunner) Run(ctx context.Context, task BucketTask) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(b.Config.Timeout)*time.Second)
 	defer cancel()
 
-	done := make(chan bool)
-	go func(d chan bool) {
+	done := make(chan error)
+	go func() {
 		if b.Config.Force || !b.Client.Exists(task.Key) {
-			b.Client.Put(task)
+			if err := b.Client.Put(task); err != nil {
+				log.Println(err)
+				done <- err
+				return
+			}
 		} else if b.Debug {
 			log.Printf("%s | %s | %s is exists, ignore", b.Config.Name, b.Type, task.Key)
 		}
-		d <- true
-	}(done)
+		done <- nil
+	}()
 
 	select {
-	case <-done:
+	case err := <-done:
 		if b.Debug {
-			log.Printf("%s | %s | %s was done", b.Config.Name, b.Type, task.Key)
+			log.Printf("%s | %s | %s was done, error %v", b.Config.Name, b.Type, task.Key, err)
 		}
-		return nil
+		return err
 
 	case <-timeoutCtx.Done():
 		err := fmt.Errorf("%s | %s | %s was timeout", b.Config.Name, b.Type, task.Key)

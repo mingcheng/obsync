@@ -3,7 +3,7 @@
 # Author: Ming Cheng<mingcheng@outlook.com>
 #
 # Created Date: Monday, March 9th 2020, 5:11:52 pm
-# Last Modified: Sunday, May 24th 2020, 10:11:26 pm
+# Last Modified: Monday, June 8th 2020, 11:03:05 am
 #
 # http://www.opensource.org/licenses/MIT
 ###
@@ -28,10 +28,15 @@ trigger:
 kind: pipeline
 type: exec
 name: build_and_publish_docker_images
+branch: master
 
 platform:
   os: linux
+
 steps:
+  - name: env
+    commands:
+      - uname -a && docker info
   - name: build
     environment:
       GOPROXY: https://goproxy.cn
