@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Monday, June 17th 2019, 3:12:43 pm
- * Last Modified: Monday, June 8th 2020, 11:01:28 am
+ * Last Modified: Monday, June 8th 2020, 2:13:06 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -44,7 +45,7 @@ var (
 
 // PrintVersion that print version and build time
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v, built at %v\n%v\n\n", version, date, commit)
+	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
 }
 
 func main() {
