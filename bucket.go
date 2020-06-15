@@ -10,7 +10,9 @@
 
 package obsync
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // BucketConfig bucket config
 type BucketConfig struct {
@@ -41,10 +43,9 @@ func RegisterBucket(typeName string, f func(c BucketConfig) (Bucket, error)) {
 
 // UnRegisterBucket to unregister bucket from local maps
 func UnRegisterBucket(typeName string) error {
-	if len(typeName) <= 0 || buckets[typeName] != nil {
+	if len(typeName) <= 0 || buckets[typeName] == nil {
 		return fmt.Errorf("the bucket with name %s is not exists", typeName)
 	}
-
 	delete(buckets, typeName)
 	return nil
 }

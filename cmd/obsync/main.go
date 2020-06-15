@@ -21,9 +21,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mingcheng/obsync.go"
-	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
-	"github.com/mingcheng/obsync.go/util"
+	"github.com/mingcheng/obsync"
+	_ "github.com/mingcheng/obsync/cmd/obsync/bucket"
+	"github.com/mingcheng/obsync/util"
 )
 
 const logo = `
@@ -37,9 +37,9 @@ var (
 	date           = "unknown"
 	config         = &util.Config{}
 	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
-	pidFilePath    = flag.String("pid", "/var/run/obsync.pid", "pid file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
+	standalone     = flag.Bool("standalone", false, "run in standalone mode")
 )
 
 // PrintVersion that prints version and build time
@@ -75,6 +75,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// overwrite configure form command line argument
+	config.Standalone = *standalone
+
+	// show config if in debug mode
 	if config.Debug {
 		log.Println(config)
 	}

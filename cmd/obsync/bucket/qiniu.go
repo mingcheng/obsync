@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
 )

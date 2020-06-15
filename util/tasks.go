@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 )
 
 // TasksByPath get tasks by the specified directory, ignore "." prefix files

@@ -16,7 +16,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/upyun/go-sdk/upyun"
 )
 

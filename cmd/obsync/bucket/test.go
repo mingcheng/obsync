@@ -14,7 +14,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 )
 
 type TestBucket struct {

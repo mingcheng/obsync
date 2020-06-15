@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 )
 
 type Config struct {
