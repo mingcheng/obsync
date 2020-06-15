@@ -47,6 +47,37 @@ func PrintVersion() {
 	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
 }
 
+func readConfig(configPath string) (*util.Config, error) {
+	// detect config file path
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("configure file %v is not exists\n", configFilePath)
+	}
+
+	// read config and initial obs client
+	if err := config.Read(configPath); err != nil {
+		log.Fatal(err)
+	}
+
+	// overwrite configure form command line argument
+	config.Standalone = *standalone
+
+	// show config if in debug mode
+	if config.Debug {
+		log.Println(config)
+	}
+
+	return config, nil
+}
+
+func Runner(config *util.Config) (obsync.Runner, error) {
+	runner, err := obsync.InitRunnerWithBuckets(config.Buckets, config.Debug)
+	if err != nil {
+		return nil, err
+	}
+
+	return runner, nil
+}
+
 func main() {
 	// show command line usage information
 	flag.Usage = func() {
@@ -64,26 +95,17 @@ func main() {
 		return
 	}
 
-	// detect config file path
-	configFilePath, _ := filepath.Abs(*configFilePath)
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		log.Fatalf("configure file %s is not exists\n", configFilePath)
+	path, err := filepath.Abs(*configFilePath)
+	if err != nil {
+		panic(err)
 	}
 
-	// read config and initial obs client
-	if err := config.Read(configFilePath); err != nil {
-		log.Fatal(err)
+	config, err := readConfig(path)
+	if err != nil {
+		panic(err)
 	}
 
-	// overwrite configure form command line argument
-	config.Standalone = *standalone
-
-	// show config if in debug mode
-	if config.Debug {
-		log.Println(config)
-	}
-
-	runner, err := obsync.InitRunnerWithBuckets(config.Buckets, config.Debug)
+	runner, err := Runner(config)
 	if err != nil {
 		panic(err)
 	}
