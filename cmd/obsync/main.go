@@ -32,14 +32,16 @@ const logo = `
 `
 
 var (
-	version        = "dev"
-	commit         = "none"
-	date           = "unknown"
-	config         = &util.Config{}
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+	config  = &util.Config{
+		Standalone: true, // using standalone mode by default
+	}
 	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
-	standalone     = flag.Bool("standalone", false, "run in standalone mode")
+	standalone     = flag.Bool("standalone", true, "run in standalone mode")
 )
 
 // PrintVersion that prints version and build time
