@@ -24,7 +24,6 @@ import (
 	"github.com/mingcheng/obsync.go"
 	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
 	"github.com/mingcheng/obsync.go/util"
-	"github.com/mingcheng/pidfile"
 )
 
 const logo = `
@@ -43,7 +42,7 @@ var (
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
 )
 
-// PrintVersion that print version and build time
+// PrintVersion that prints version and build time
 func PrintVersion() {
 	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
 }
@@ -80,25 +79,13 @@ func main() {
 		log.Println(config)
 	}
 
-	// detect pid file exists, and generate pid file
-	if !config.Standalone {
-		pid, err := pidfile.New(*pidFilePath)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		defer pid.Remove()
-		if config.Debug {
-			log.Println(pid)
-		}
+	runner, err := obsync.InitRunnerWithBuckets(config.Buckets, config.Debug)
+	if err != nil {
+		panic(err)
 	}
 
-	// @TODO
-	obsync.AddBucketRunners(config.Buckets, config.Debug)
-
 	if *printInfo {
-		info, _ := obsync.GetBucketInfo()
+		info, _ := runner.AllStatus()
 		for k, i := range info {
 			log.Println(k, i)
 		}
@@ -133,8 +120,8 @@ func main() {
 	defer cancel()
 
 	// start observe
-	go obsync.Observe(ctx)
-	defer obsync.Stop()
+	go runner.Observe(ctx)
+	defer runner.Stop()
 
 	// start ticker to running tasks
 	if config.Interval <= 0 {
@@ -145,20 +132,21 @@ func main() {
 	defer ticker.Stop()
 
 	for ; true; <-ticker.C {
-		// get all obs tasks and put
-		if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
+		// get all obs tasks and send to server
+		tasks, err := util.TasksByPath(config.Root)
+		if err != nil || len(tasks) <= 0 {
 			log.Printf("director %v is empty, caught %v", config.Root, err)
 			return
-		} else {
-			// if anything is fine, add tasks to runners
-			obsync.AddTasks(tasks)
 		}
+
+		// if anything is fine, add tasks to runners
+		runner.AddTasks(tasks)
 
 		// detect whether is standalone
 		if config.Standalone {
 			log.Printf("standalone mode, duration %v", standbyDuration)
 		} else {
-			log.Println("obsync is not configured in standalone mode, quiting")
+			log.Println("obsync is not configured in the standalone mode, quiting")
 			return
 		}
 	}
