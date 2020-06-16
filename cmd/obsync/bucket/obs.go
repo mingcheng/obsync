@@ -15,8 +15,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mingcheng/obsync.go"
-	"github.com/mingcheng/obsync.go/obs"
+	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/obs"
 )
 
 // OBSBucket struct for obs client

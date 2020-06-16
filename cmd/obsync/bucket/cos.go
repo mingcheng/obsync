@@ -18,7 +18,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 

@@ -15,7 +15,7 @@ import (
 	"log"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 )
 
 type OSSBucket struct {
