@@ -75,14 +75,15 @@ func (b *BucketRunner) AddBuckets(configs []BucketConfig) error {
 
 func (b *BucketRunner) AddTask(task BucketTask) {
 	for index := range b.taskPool {
-		config := b.configs[index]
-
-		b.taskPool[index] <- BucketTask{
-			Local:   task.Local,
-			Key:     task.Key,
-			Force:   config.Force,
-			Timeout: time.Duration(config.Timeout) * time.Second,
-		}
+		go func(i int) {
+			config := b.configs[i]
+			b.taskPool[i] <- BucketTask{
+				Local:   task.Local,
+				Key:     task.Key,
+				Force:   config.Force,
+				Timeout: time.Duration(config.Timeout) * time.Second,
+			}
+		}(index)
 	}
 }
 
