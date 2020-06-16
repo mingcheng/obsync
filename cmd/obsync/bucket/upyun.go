@@ -11,11 +11,12 @@
 package bucket
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/upyun/go-sdk/upyun"
 )
 
@@ -36,12 +37,13 @@ func (t UpyunBucket) Exists(path string) bool {
 	}
 }
 
-func (t UpyunBucket) Put(task obsync.BucketTask) {
+func (t UpyunBucket) Put(task obsync.BucketTask) error {
 	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
 
 	if t.Exists(task.Key) {
-		log.Printf("%s is exists", task.Key)
-		return
+		errs := fmt.Errorf("%s is exists", task.Key)
+		log.Println(errs)
+		return errs
 	}
 
 	err := t.Client.Put(&upyun.PutObjectConfig{
@@ -51,8 +53,10 @@ func (t UpyunBucket) Put(task obsync.BucketTask) {
 
 	if err != nil {
 		log.Println(err)
+		return err
 	} else {
 		log.Printf("%s is uploaded to UpYun", task.Key)
+		return nil
 	}
 }
 

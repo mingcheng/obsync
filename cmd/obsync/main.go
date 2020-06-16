@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Monday, June 17th 2019, 3:12:43 pm
- * Last Modified: Monday, June 17th 2019, 3:48:51 pm
+ * Last Modified: Monday, June 8th 2020, 2:13:06 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -17,13 +17,13 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
-	"github.com/mingcheng/obsync.go"
-	_ "github.com/mingcheng/obsync.go/cmd/obsync/bucket"
-	"github.com/mingcheng/obsync.go/util"
-	"github.com/mingcheng/pidfile"
+	"github.com/mingcheng/obsync"
+	_ "github.com/mingcheng/obsync/cmd/obsync/bucket"
+	"github.com/mingcheng/obsync/util"
 )
 
 const logo = `
@@ -32,19 +32,52 @@ const logo = `
 `
 
 var (
-	version        = "dev"
-	commit         = "none"
-	date           = "unknown"
-	config         = &util.Config{}
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+	config  = &util.Config{
+		Standalone: true, // using standalone mode by default
+	}
 	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
-	pidFilePath    = flag.String("pid", "/var/run/obsync.pid", "pid file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
+	standalone     = flag.Bool("standalone", true, "run in standalone mode")
 )
 
-// PrintVersion that print version and build time
+// PrintVersion that prints version and build time
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v, built at %v\n%v\n\n", version, date, commit)
+	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
+}
+
+func readConfig(configPath string) (*util.Config, error) {
+	// detect config file path
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("configure file %v is not exists\n", configFilePath)
+	}
+
+	// read config and initial obs client
+	if err := config.Read(configPath); err != nil {
+		log.Fatal(err)
+	}
+
+	// overwrite configure form command line argument
+	config.Standalone = *standalone
+
+	// show config if in debug mode
+	if config.Debug {
+		log.Println(config)
+	}
+
+	return config, nil
+}
+
+func Runner(config *util.Config) (obsync.Runner, error) {
+	runner, err := obsync.InitRunnerWithBuckets(config.Buckets, config.Debug)
+	if err != nil {
+		return nil, err
+	}
+
+	return runner, nil
 }
 
 func main() {
@@ -64,40 +97,23 @@ func main() {
 		return
 	}
 
-	// detect config file path
-	configFilePath, _ := filepath.Abs(*configFilePath)
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		log.Fatalf("configure file %s is not exists\n", configFilePath)
+	path, err := filepath.Abs(*configFilePath)
+	if err != nil {
+		panic(err)
 	}
 
-	// read config and initial obs client
-	if err := config.Read(configFilePath); err != nil {
-		log.Fatal(err)
+	config, err := readConfig(path)
+	if err != nil {
+		panic(err)
 	}
 
-	if config.Debug {
-		log.Println(config)
+	runner, err := Runner(config)
+	if err != nil {
+		panic(err)
 	}
-
-	// detect pid file exists, and generate pid file
-	if !config.Standalone {
-		pid, err := pidfile.New(*pidFilePath)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		defer pid.Remove()
-		if config.Debug {
-			log.Println(pid)
-		}
-	}
-
-	// @TODO
-	obsync.AddBucketRunners(config.Buckets, config.Debug)
 
 	if *printInfo {
-		info, _ := obsync.GetBucketInfo()
+		info, _ := runner.AllStatus()
 		for k, i := range info {
 			log.Println(k, i)
 		}
@@ -132,8 +148,8 @@ func main() {
 	defer cancel()
 
 	// start observe
-	go obsync.Observe(ctx)
-	defer obsync.Stop()
+	go runner.Observe(ctx)
+	defer runner.Stop()
 
 	// start ticker to running tasks
 	if config.Interval <= 0 {
@@ -144,20 +160,21 @@ func main() {
 	defer ticker.Stop()
 
 	for ; true; <-ticker.C {
-		// get all obs tasks and put
-		if tasks, err := obsync.TasksByPath(config.Root); err != nil || len(tasks) <= 0 {
+		// get all obs tasks and send to server
+		tasks, err := util.TasksByPath(config.Root)
+		if err != nil || len(tasks) <= 0 {
 			log.Printf("director %v is empty, caught %v", config.Root, err)
 			return
-		} else {
-			// if anything is fine, add tasks to runners
-			obsync.AddTasks(tasks)
 		}
+
+		// if anything is fine, add tasks to runners
+		runner.AddTasks(tasks)
 
 		// detect whether is standalone
 		if config.Standalone {
 			log.Printf("standalone mode, duration %v", standbyDuration)
 		} else {
-			log.Println("obsync is not configured in standalone mode, quiting")
+			log.Println("obsync is not configured in the standalone mode, quiting")
 			return
 		}
 	}

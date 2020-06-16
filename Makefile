@@ -29,7 +29,7 @@ list:
 	@echo ${GOFILES}
 
 test:
-	@go test -cpu=1,2,4 -v -tags integration ./...
+	@go test -cpu=1,2,4 -v -tags integration . ./cmd/...
 
 install: build
 	@$(GO) install $(GO_FLAGS) -tags=jsoniter $(SRC)

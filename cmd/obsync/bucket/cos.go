@@ -18,7 +18,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
@@ -50,23 +50,27 @@ func (t COSBucket) Exists(path string) bool {
 	}
 }
 
-func (t COSBucket) Put(task obsync.BucketTask) {
+func (t COSBucket) Put(task obsync.BucketTask) error {
 	fd, err := os.Open(task.Local)
 	if err != nil {
 		log.Printf("open file with error: %v", err)
+		return err
 	}
 
 	resp, err := t.Client.Object.Put(context.Background(), task.Key, fd, &cos.ObjectPutOptions{})
-
 	if err != nil {
 		log.Printf("put file %s with error: %v", task.Key, err)
+		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("put file %s with not normal status, code ", resp.StatusCode)
-	} else {
-		log.Printf("put file %s is finished", task.Key)
+		errs := fmt.Errorf("put file %v with not normal status, code %v", task.Key, resp.StatusCode)
+		log.Print(errs)
+		return errs
 	}
+
+	log.Printf("put file %s is finished", task.Key)
+	return err
 }
 
 func init() {

@@ -15,7 +15,7 @@ import (
 	"log"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 )
 
 type OSSBucket struct {
@@ -23,17 +23,20 @@ type OSSBucket struct {
 	Config *obsync.BucketConfig
 }
 
-func (o *OSSBucket) Put(task obsync.BucketTask) {
-	if bucket, err := o.GetBucket(); err != nil {
+func (o *OSSBucket) Put(task obsync.BucketTask) error {
+	bucket, err := o.GetBucket()
+	if err != nil {
 		log.Println(err)
-	} else {
-		err = bucket.PutObjectFromFile(task.Key, task.Local)
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Printf("upload %s to oss is finished", task.Key)
-		}
+		return err
 	}
+
+	if err = bucket.PutObjectFromFile(task.Key, task.Local); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Printf("upload %s to oss is finished", task.Key)
+	return nil
 }
 
 func (o *OSSBucket) Info() (interface{}, error) {

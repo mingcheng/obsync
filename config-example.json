@@ -4,9 +4,16 @@
   "buckets": [
     {
       "type": "test",
-      "thread": 5,
+      "thread": 10,
       "name": "test",
       "timeout": 10,
+      "force": true
+    },
+    {
+      "type": "test",
+      "thread": 5,
+      "name": "test22222",
+      "timeout": 5,
       "force": true
     }
   ]

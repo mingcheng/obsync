@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mingcheng/obsync.go"
+	"github.com/mingcheng/obsync"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
 )
@@ -51,7 +51,7 @@ func (t QiNiuBucket) Exists(path string) bool {
 	}
 }
 
-func (t QiNiuBucket) Put(task obsync.BucketTask) {
+func (t QiNiuBucket) Put(task obsync.BucketTask) error {
 	formUploader := storage.NewFormUploader(&storage.Config{
 		UseHTTPS: true,
 	})
@@ -61,9 +61,11 @@ func (t QiNiuBucket) Put(task obsync.BucketTask) {
 
 	if err != nil {
 		log.Printf("put %s with error: %v", task.Key, err)
-	} else {
-		log.Printf("put %s finished, with hash %s", ret.Key, ret.Hash)
+		return err
 	}
+
+	log.Printf("put %s finished, with hash %s", ret.Key, ret.Hash)
+	return nil
 }
 
 func (t QiNiuBucket) UploadToken(task obsync.BucketTask) string {
