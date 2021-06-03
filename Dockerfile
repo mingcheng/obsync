@@ -1,4 +1,4 @@
-FROM golang:1.14.4 AS builder
+FROM golang:1.16 AS builder
 LABEL maintainer="Ming Chen"
 
 # Using 163 mirror for Debian Strech
@@ -8,7 +8,7 @@ LABEL maintainer="Ming Chen"
 ENV GOPATH /go
 ENV GOROOT /usr/local/go
 ENV PACKAGE github.com/mingcheng/obsync.go
-ENV GOPROXY https://goproxy.cn
+ENV GOPROXY https://goproxy.cn,direct
 ENV BUILD_DIR ${GOPATH}/src/${PACKAGE}
 ENV TARGET_DIR ${BUILD_DIR}/target
 
@@ -20,10 +20,7 @@ RUN ${GOROOT}/bin/go version
 # Build
 COPY . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
-RUN make clean && \
-  env GO111MODULE=on GO15VENDOREXPERIMENT=1 make build && \
-  ${TARGET_DIR}/obsync -v && \
-  mv ${TARGET_DIR}/obsync /usr/bin/obsync
+RUN make clean build && ${TARGET_DIR}/obsync -v && mv ${TARGET_DIR}/obsync /usr/bin/obsync
 
 # Stage2
 FROM alpine:3.9.6

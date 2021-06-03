@@ -1,6 +1,6 @@
 module github.com/mingcheng/obsync
 
-go 1.12
+go 1.16
 
 // replace github.com/mingcheng/pidfile => ../
 
