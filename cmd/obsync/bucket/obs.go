@@ -15,8 +15,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 	"github.com/mingcheng/obsync"
-	"github.com/mingcheng/obsync/obs"
 )
 
 // OBSBucket struct for obs client
