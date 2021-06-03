@@ -15,10 +15,11 @@ import (
 	"time"
 
 	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
 )
 
 type TestBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 }
 
 func (t TestBucket) Info() (interface{}, error) {
@@ -35,7 +36,7 @@ func (t TestBucket) Put(task obsync.BucketTask) error {
 }
 
 func init() {
-	obsync.RegisterBucket("test", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("test", func(config bucket.Config) (bucket.Bucket, error) {
 		return TestBucket{
 			Config: config,
 		}, nil

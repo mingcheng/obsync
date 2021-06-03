@@ -3,7 +3,6 @@ package util
 import (
 	"os"
 	"os/user"
-	"path/filepath"
 	"runtime"
 )
 
@@ -22,16 +21,16 @@ func HomeDir() string {
 	}
 }
 
-const configFileName = "obsync.json"
-
-func DefaultConfig() string {
-	return filepath.Join("/etc", configFileName)
-}
-
-func DebugConfig() string {
-	if pwd, err := os.Getwd(); err != nil {
-		return DefaultConfig()
-	} else {
-		return filepath.Join(pwd, configFileName)
-	}
-}
+// const configFileName = "obsync.json"
+//
+// func DefaultConfig() string {
+// 	return filepath.Join("/etc", configFileName)
+// }
+//
+// func DebugConfig() string {
+// 	if pwd, err := os.Getwd(); err != nil {
+// 		return DefaultConfig()
+// 	} else {
+// 		return filepath.Join(pwd, configFileName)
+// 	}
+// }

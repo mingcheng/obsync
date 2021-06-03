@@ -17,11 +17,12 @@ import (
 	"time"
 
 	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
 	"github.com/upyun/go-sdk/upyun"
 )
 
 type UpyunBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 	Client *upyun.UpYun
 }
 
@@ -61,7 +62,7 @@ func (t UpyunBucket) Put(task obsync.BucketTask) error {
 }
 
 func init() {
-	obsync.RegisterBucket("upyun", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("upyun", func(config bucket.Config) (bucket.Bucket, error) {
 		client := upyun.NewUpYun(&upyun.UpYunConfig{
 			Bucket:   config.Name,
 			Operator: config.Key,

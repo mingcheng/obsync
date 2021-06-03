@@ -8,7 +8,8 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.0.0+incompatible
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.21.1+incompatible // indirect
+	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.21.1+incompatible
+	github.com/judwhite/go-svc v1.2.1
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/qiniu/api.v7 v7.2.5+incompatible

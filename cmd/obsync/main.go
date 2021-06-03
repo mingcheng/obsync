@@ -10,20 +10,15 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
-	"path/filepath"
 	"runtime"
-	"syscall"
-	"time"
 
-	"github.com/mingcheng/obsync"
+	"github.com/judwhite/go-svc"
 	_ "github.com/mingcheng/obsync/cmd/obsync/bucket"
-	"github.com/mingcheng/obsync/util"
+	"github.com/mingcheng/obsync/runner"
 )
 
 const logo = `
@@ -35,13 +30,12 @@ var (
 	version = "dev"
 	commit  = "none"
 	date    = "unknown"
-	config  = &util.Config{
-		Standalone: true, // using standalone mode by default
-	}
-	configFilePath = flag.String("f", util.DefaultConfig(), "config file path")
+)
+
+var (
+	configFilePath = flag.String("f", "", "config file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
-	standalone     = flag.Bool("standalone", true, "run in standalone mode")
 )
 
 // PrintVersion that prints version and build time
@@ -49,30 +43,8 @@ func PrintVersion() {
 	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
 }
 
-func readConfig(configPath string) (*util.Config, error) {
-	// detect config file path
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("configure file %v is not exists\n", configFilePath)
-	}
-
-	// read config and initial obs client
-	if err := config.Read(configPath); err != nil {
-		log.Fatal(err)
-	}
-
-	// overwrite configure form command line argument
-	config.Standalone = *standalone
-
-	// show config if in debug mode
-	if config.Debug {
-		log.Println(config)
-	}
-
-	return config, nil
-}
-
-func Runner(config *util.Config) (obsync.Runner, error) {
-	runner, err := obsync.InitRunnerWithBuckets(config.Buckets, config.Debug)
+func Runner(config *Config) (runner.Runner, error) {
+	runner, err := runner.Init(config.Buckets, os.Getenv("DEBUG") != "")
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +52,16 @@ func Runner(config *util.Config) (obsync.Runner, error) {
 	return runner, nil
 }
 
-func main() {
+func init() {
 	// show command line usage information
 	flag.Usage = func() {
 		fmt.Println(logo)
 		PrintVersion()
 		flag.PrintDefaults()
 	}
+}
 
+func main() {
 	// parse command line
 	flag.Parse()
 
@@ -97,23 +71,24 @@ func main() {
 		return
 	}
 
-	path, err := filepath.Abs(*configFilePath)
+	config, err := NewConfig(*configFilePath)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
-	config, err := readConfig(path)
-	if err != nil {
-		panic(err)
+	// detect root directory
+	info, err := os.Stat(config.Root)
+	if os.IsNotExist(err) || !info.IsDir() {
+		log.Panicf("config root %s, is not exits or not a directory\n", config.Root)
 	}
 
-	runner, err := Runner(config)
+	r, err := Runner(config)
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	if *printInfo {
-		info, _ := runner.AllStatus()
+		info, _ := r.AllStatus()
 		for k, i := range info {
 			log.Println(k, i)
 		}
@@ -121,61 +96,10 @@ func main() {
 		return
 	}
 
-	// detect root directory
-	config.Root, _ = filepath.Abs(config.Root)
-	if info, err := os.Stat(config.Root); os.IsNotExist(err) || !info.IsDir() {
-		log.Printf("config root %s, is not exits or not a directory\n", config.Root)
-		return
-	} else if config.Debug {
-		log.Printf("root path is %s\n", config.Root)
-	}
-
-	go func() {
-		sig := make(chan os.Signal)
-		signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
-
-		for s := range sig {
-			switch s {
-			default:
-				log.Println("caught signal, stopping all tasks")
-				os.Exit(0)
-			}
-		}
-	}()
-
-	// root context
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// start observe
-	go runner.Observe(ctx)
-	defer runner.Stop()
-
-	// start ticker to running tasks
-	if config.Interval <= 0 {
-		config.Interval = 1
-	}
-	standbyDuration := time.Duration(config.Interval) * time.Hour
-	ticker := time.NewTicker(standbyDuration)
-	defer ticker.Stop()
-
-	for ; true; <-ticker.C {
-		// get all obs tasks and send to server
-		tasks, err := util.TasksByPath(config.Root)
-		if err != nil || len(tasks) <= 0 {
-			log.Printf("director %v is empty, caught %v", config.Root, err)
-			return
-		}
-
-		// if anything is fine, add tasks to runners
-		runner.AddTasks(tasks)
-
-		// detect whether is standalone
-		if config.Standalone {
-			log.Printf("standalone mode, duration %v", standbyDuration)
-		} else {
-			log.Println("obsync is not configured in the standalone mode, quiting")
-			return
-		}
+	if err := svc.Run(&program{
+		Config: *config,
+		Runner: r,
+	}); err != nil {
+		log.Fatal(err)
 	}
 }

@@ -17,12 +17,13 @@ import (
 
 	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
 )
 
 // OBSBucket struct for obs client
 type OBSBucket struct {
 	Client *obs.ObsClient
-	Config obsync.BucketConfig
+	Config bucket.Config
 }
 
 // Put a file to obs bucket
@@ -71,7 +72,7 @@ func (o *OBSBucket) Info() (interface{}, error) {
 }
 
 func init() {
-	obsync.RegisterBucket("obs", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("obs", func(config bucket.Config) (bucket.Bucket, error) {
 		client, err := obs.New(config.Key, config.Secret, config.EndPoint, obs.WithSocketTimeout(int(config.Timeout)))
 		if err != nil {
 			return nil, err
