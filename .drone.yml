@@ -21,26 +21,26 @@ steps:
       - make clean test build
       - ./target/obsync -v
 
-      - name: publish-image
-        image: plugins/docker
-        volumes:
-          - name: docker-sock
-            path: /var/run/docker.sock
-        environment:
-          GOPROXY: "https://goproxy.cn,direct"
-        #      when:
-        #        branch:
-        #          - master
-        #        event:
-        #          - push
-        settings:
-          registry: ghcr.io
-          repo: ghcr.io/mingcheng/obsync
-          username: mingcheng
-          password:
-            from_secret: cr_pat
-          dockerfile: Dockerfile
-          custom_dns: 119.29.29.29
-          tags:
-            - latest
-            - 1.2.0
+  - name: publish-image
+    image: plugins/docker
+    volumes:
+      - name: docker-sock
+        path: /var/run/docker.sock
+    environment:
+      GOPROXY: "https://goproxy.cn,direct"
+    #      when:
+    #        branch:
+    #          - master
+    #        event:
+    #          - push
+    settings:
+      registry: ghcr.io
+      repo: ghcr.io/mingcheng/obsync
+      username: mingcheng
+      password:
+        from_secret: cr_pat
+      dockerfile: Dockerfile
+      custom_dns: 119.29.29.29
+      tags:
+        - latest
+        - 1.2.0
