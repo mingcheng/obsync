@@ -11,13 +11,13 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
+      - name: checkout source
         uses: actions/checkout@v2
-      - name: Push to GitHub Packages
+      - name: push to ghcr.io
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: mingcheng/obsync/obsync
+          registry: ghcr.io
+          repository: mingcheng/obsync
           tag_with_ref: true
