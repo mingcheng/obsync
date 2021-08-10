@@ -24,7 +24,7 @@ list:
 	@echo ${GOFILES}
 
 test:
-	@go test -cpu=1,2,4 -v -tags integration . ./cmd/...
+	@go test -v ./cmd/... ./bucket/...
 
 install: build
 	@$(GO) install $(GO_FLAGS) -tags=jsoniter $(SRC)
