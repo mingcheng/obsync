@@ -14,41 +14,42 @@ name: build_and_run_on_docker
 
 steps:
   - name: build
-    image: golang:1.14.4
+    image: golang:1.16
     environment:
       GOPROXY: https://goproxy.cn
     commands:
       - make clean test build
       - ./target/obsync -v
+
 trigger:
   branch:
     - develop
 
----
-kind: pipeline
-type: exec
-name: build_and_publish_docker_images
-branch: master
-
-platform:
-  os: linux
-
-steps:
-  - name: env
-    commands:
-      - uname -a && docker info
-  - name: build
-    environment:
-      GOPROXY: https://goproxy.cn
-      GOOS: linux
-      DOCKER_REPO_NAME: mingcheng/obsync
-      DOCKER_REPO_HOST: swr.la-south-2.myhuaweicloud.com
-      DOCKER_PASSWD:
-        from_secret: docker_password
-      DOCKER_USER:
-        from_secret: docker_username
-    commands:
-      - make docker_image_publish
-trigger:
-  branch:
-    - master
+#---
+#kind: pipeline
+#type: exec
+#name: build_and_publish_docker_images
+#branch: master
+#
+#platform:
+#  os: linux
+#
+#steps:
+#  - name: env
+#    commands:
+#      - uname -a && docker info
+#  - name: build
+#    environment:
+#      GOPROXY: https://goproxy.cn
+#      GOOS: linux
+#      DOCKER_REPO_NAME: mingcheng/obsync
+#      DOCKER_REPO_HOST: swr.la-south-2.myhuaweicloud.com
+#      DOCKER_PASSWD:
+#        from_secret: docker_password
+#      DOCKER_USER:
+#        from_secret: docker_username
+#    commands:
+#      - make docker_image_publish
+#trigger:
+#  branch:
+#    - master
