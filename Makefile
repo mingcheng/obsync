@@ -1,18 +1,13 @@
 PROJECT="obsync"
 VERSION=`date +%Y%m%d`
 
-ifneq ("$(wildcard /go)","")
-   GOPATH=/go
-   GOROOT=/usr/local/go
-endif
-
 TARGET=./target
 SRC=./cmd/obsync
 BINARY=$(TARGET)/obsync
 
 GO_ENV=CGO_ENABLED=0
 GO_FLAGS=-ldflags="-X main.version=$(VERSION) -X 'main.commit=`git rev-parse HEAD`' -X 'main.date=`date`'"
-GO=env $(GO_ENV) $(GOROOT)/bin/go
+GO=go
 
 PACKAGES=`go list ./... | grep -v /vendor/`
 GOFILES=`find . -name "*.go" -type f -not -path "./vendor/*"`
