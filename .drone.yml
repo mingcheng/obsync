@@ -44,3 +44,8 @@ steps:
       tags:
         - latest
         - 1.2.0
+
+volumes:
+  - name: docker-sock
+    host:
+      path: /var/run/docker.sock
