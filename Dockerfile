@@ -23,7 +23,7 @@ WORKDIR ${BUILD_DIR}
 RUN make clean build && ${TARGET_DIR}/obsync -v && mv ${TARGET_DIR}/obsync /usr/bin/obsync
 
 # Stage2
-FROM alpine:3.9.6
+FROM debian:stable
 
 # @from https://mirrors.ustc.edu.cn/help/alpine.html
 #RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories

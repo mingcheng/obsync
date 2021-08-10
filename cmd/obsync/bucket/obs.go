@@ -16,8 +16,8 @@ import (
 	"net/http"
 
 	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
-	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 // OBSBucket struct for obs client
@@ -27,7 +27,7 @@ type OBSBucket struct {
 }
 
 // Put a file to obs bucket
-func (o *OBSBucket) Put(task obsync.BucketTask) error {
+func (o *OBSBucket) Put(task internal.Task) error {
 	input := &obs.PutFileInput{}
 	input.Bucket = o.Config.Name
 	input.Key = task.Key

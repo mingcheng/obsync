@@ -8,11 +8,11 @@
  * http://www.opensource.org/licenses/MIT
  */
 
-package obsync
+package internal
 
 import "time"
 
-type BucketTask struct {
+type Task struct {
 	Local   string
 	Key     string
 	Force   bool

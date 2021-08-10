@@ -16,8 +16,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 	"github.com/upyun/go-sdk/upyun"
 )
 
@@ -38,7 +38,7 @@ func (t UpyunBucket) Exists(path string) bool {
 	}
 }
 
-func (t UpyunBucket) Put(task obsync.BucketTask) error {
+func (t UpyunBucket) Put(task internal.Task) error {
 	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
 
 	if t.Exists(task.Key) {

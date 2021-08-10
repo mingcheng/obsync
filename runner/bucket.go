@@ -6,14 +6,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 type Bucket struct {
 	Debug     bool
 	Timeout   time.Duration
-	taskPool  []chan obsync.BucketTask
+	taskPool  []chan internal.Task
 	buckets   []bucket.Bucket
 	configs   []bucket.Config
 	observing chan bool
@@ -47,7 +47,7 @@ func (b *Bucket) AddBucket(config bucket.Config) error {
 	}
 
 	b.buckets = append(b.buckets, bucket)
-	b.taskPool = append(b.taskPool, make(chan obsync.BucketTask, config.Thread))
+	b.taskPool = append(b.taskPool, make(chan internal.Task, config.Thread))
 	b.configs = append(b.configs, config)
 	return nil
 }
@@ -62,11 +62,11 @@ func (b *Bucket) AddBuckets(configs []bucket.Config) error {
 	return nil
 }
 
-func (b *Bucket) AddTask(task obsync.BucketTask) {
+func (b *Bucket) AddTask(task internal.Task) {
 	for index := range b.taskPool {
 		go func(i int) {
 			config := b.configs[i]
-			b.taskPool[i] <- obsync.BucketTask{
+			b.taskPool[i] <- internal.Task{
 				Local:   task.Local,
 				Key:     task.Key,
 				Force:   config.Force,
@@ -76,7 +76,7 @@ func (b *Bucket) AddTask(task obsync.BucketTask) {
 	}
 }
 
-func (b *Bucket) AddTasks(tasks []obsync.BucketTask) {
+func (b *Bucket) AddTasks(tasks []internal.Task) {
 	for _, task := range tasks {
 		b.AddTask(task)
 	}
@@ -111,8 +111,8 @@ func (b *Bucket) Stop() {
 	b.observing <- false
 }
 
-// Run single task with `BucketTask`
-func (b *Bucket) run(ctx context.Context, task obsync.BucketTask, client bucket.Bucket, config bucket.Config) error {
+// Run single task with `Task`
+func (b *Bucket) run(ctx context.Context, task internal.Task, client bucket.Bucket, config bucket.Config) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, task.Timeout)
 	defer cancel()
 

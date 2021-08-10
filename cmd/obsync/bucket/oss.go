@@ -15,8 +15,8 @@ import (
 	"log"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 type OSSBucket struct {
@@ -24,7 +24,7 @@ type OSSBucket struct {
 	Config *bucket.Config
 }
 
-func (o *OSSBucket) Put(task obsync.BucketTask) error {
+func (o *OSSBucket) Put(task internal.Task) error {
 	bucket, err := o.GetBucket()
 	if err != nil {
 		log.Println(err)
