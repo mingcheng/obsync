@@ -78,7 +78,7 @@
 
 基于用户运行的方式安装，则拷贝上述对应的两个文件到 `$HOME/.config/systemd/user`，同时注意执行文件以及配置文件的路径。然后，刷新 `systemctl --user daemon-reload` 后执行 `systemctl --user start obsync.timer` 即可运行。如想自动启动，则运行 `systemctl --user enable obsync.timer` 即可。
 
-### 使用 Docker 镜像部署
+### 使用 Docker 镜像部署
 
 简单的可以使用
 
