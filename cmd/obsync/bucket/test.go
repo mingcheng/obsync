@@ -14,8 +14,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
-	"github.com/mingcheng/obsync/internal"
 )
 
 type TestBucket struct {
@@ -30,7 +30,7 @@ func (t TestBucket) Exists(path string) bool {
 	return false
 }
 
-func (t TestBucket) Put(task internal.Task) error {
+func (t TestBucket) Put(task obsync.Task) error {
 	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 	return nil
 }

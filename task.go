@@ -8,7 +8,7 @@
  * http://www.opensource.org/licenses/MIT
  */
 
-package internal
+package obsync
 
 import "time"
 

@@ -13,7 +13,7 @@ package bucket
 import (
 	"fmt"
 
-	"github.com/mingcheng/obsync/internal"
+	"github.com/mingcheng/obsync"
 )
 
 type (
@@ -32,7 +32,7 @@ type (
 	Bucket interface {
 		Info() (interface{}, error)
 		Exists(path string) bool
-		Put(task internal.Task) error
+		Put(task obsync.Task) error
 	}
 
 	BucketFunc func(c Config) (Bucket, error)

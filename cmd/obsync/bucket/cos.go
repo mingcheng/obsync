@@ -18,8 +18,8 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
-	"github.com/mingcheng/obsync/internal"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
@@ -51,7 +51,7 @@ func (t COSBucket) Exists(path string) bool {
 	}
 }
 
-func (t COSBucket) Put(task internal.Task) error {
+func (t COSBucket) Put(task obsync.Task) error {
 	fd, err := os.Open(task.Local)
 	if err != nil {
 		log.Printf("open file with error: %v", err)

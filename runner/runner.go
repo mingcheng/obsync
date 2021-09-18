@@ -3,16 +3,16 @@ package runner
 import (
 	"context"
 
+	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
-	"github.com/mingcheng/obsync/internal"
 )
 
 type Runner interface {
 	AddBucket(config bucket.Config) error
 	AddBuckets(configs []bucket.Config) error
 
-	AddTask(task internal.Task)
-	AddTasks(tasks []internal.Task)
+	AddTask(task obsync.Task)
+	AddTasks(tasks []obsync.Task)
 
 	AllStatus() ([]interface{}, error)
 	Status(name string) interface{}
