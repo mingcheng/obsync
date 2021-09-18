@@ -15,18 +15,19 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mingcheng/obsync"
-	"github.com/mingcheng/obsync/obs"
+	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 // OBSBucket struct for obs client
 type OBSBucket struct {
 	Client *obs.ObsClient
-	Config obsync.BucketConfig
+	Config bucket.Config
 }
 
 // Put a file to obs bucket
-func (o *OBSBucket) Put(task obsync.BucketTask) error {
+func (o *OBSBucket) Put(task internal.Task) error {
 	input := &obs.PutFileInput{}
 	input.Bucket = o.Config.Name
 	input.Key = task.Key
@@ -71,7 +72,7 @@ func (o *OBSBucket) Info() (interface{}, error) {
 }
 
 func init() {
-	obsync.RegisterBucket("obs", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("obs", func(config bucket.Config) (bucket.Bucket, error) {
 		client, err := obs.New(config.Key, config.Secret, config.EndPoint, obs.WithSocketTimeout(int(config.Timeout)))
 		if err != nil {
 			return nil, err

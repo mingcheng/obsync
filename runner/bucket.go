@@ -1,36 +1,25 @@
-package obsync
+package runner
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
-type Runner interface {
-	AddBucket(config BucketConfig) error
-	AddBuckets(configs []BucketConfig) error
-
-	AddTask(task BucketTask)
-	AddTasks(tasks []BucketTask)
-
-	AllStatus() ([]interface{}, error)
-	Status(name string) interface{}
-
-	Observe(ctx context.Context)
-	Stop()
-}
-
-type BucketRunner struct {
+type Bucket struct {
 	Debug     bool
 	Timeout   time.Duration
-	taskPool  []chan BucketTask
-	buckets   []Bucket
-	configs   []BucketConfig
+	taskPool  []chan internal.Task
+	buckets   []bucket.Bucket
+	configs   []bucket.Config
 	observing chan bool
 }
 
-func (b *BucketRunner) AllStatus() ([]interface{}, error) {
+func (b *Bucket) AllStatus() ([]interface{}, error) {
 	for _, buckets := range b.buckets {
 		fmt.Println(buckets.Info())
 	}
@@ -38,16 +27,16 @@ func (b *BucketRunner) AllStatus() ([]interface{}, error) {
 	return nil, nil
 }
 
-func (b *BucketRunner) Status(name string) interface{} {
+func (b *Bucket) Status(name string) interface{} {
 	panic("implement me")
 }
 
-func (b *BucketRunner) AddBucket(config BucketConfig) error {
+func (b *Bucket) AddBucket(config bucket.Config) error {
 	if len(b.buckets) != len(b.configs) || len(b.buckets) != len(b.taskPool) {
 		return fmt.Errorf("the buckets and taskPool's size is not the same")
 	}
 
-	callback, err := BucketCallback(config.Type)
+	callback, err := bucket.Func(config.Type)
 	if err != nil {
 		return err
 	}
@@ -58,12 +47,12 @@ func (b *BucketRunner) AddBucket(config BucketConfig) error {
 	}
 
 	b.buckets = append(b.buckets, bucket)
-	b.taskPool = append(b.taskPool, make(chan BucketTask, config.Thread))
+	b.taskPool = append(b.taskPool, make(chan internal.Task, config.Thread))
 	b.configs = append(b.configs, config)
 	return nil
 }
 
-func (b *BucketRunner) AddBuckets(configs []BucketConfig) error {
+func (b *Bucket) AddBuckets(configs []bucket.Config) error {
 	for _, config := range configs {
 		if err := b.AddBucket(config); err != nil {
 			return err
@@ -73,11 +62,11 @@ func (b *BucketRunner) AddBuckets(configs []BucketConfig) error {
 	return nil
 }
 
-func (b *BucketRunner) AddTask(task BucketTask) {
+func (b *Bucket) AddTask(task internal.Task) {
 	for index := range b.taskPool {
 		go func(i int) {
 			config := b.configs[i]
-			b.taskPool[i] <- BucketTask{
+			b.taskPool[i] <- internal.Task{
 				Local:   task.Local,
 				Key:     task.Key,
 				Force:   config.Force,
@@ -87,13 +76,13 @@ func (b *BucketRunner) AddTask(task BucketTask) {
 	}
 }
 
-func (b *BucketRunner) AddTasks(tasks []BucketTask) {
+func (b *Bucket) AddTasks(tasks []internal.Task) {
 	for _, task := range tasks {
 		b.AddTask(task)
 	}
 }
 
-func (b *BucketRunner) Observe(ctx context.Context) {
+func (b *Bucket) Observe(ctx context.Context) {
 	for index := range b.taskPool {
 		go func(i int) {
 			for {
@@ -114,7 +103,7 @@ func (b *BucketRunner) Observe(ctx context.Context) {
 	}
 }
 
-func (b *BucketRunner) Stop() {
+func (b *Bucket) Stop() {
 	if b.Debug {
 		log.Println("stop observing")
 	}
@@ -122,8 +111,8 @@ func (b *BucketRunner) Stop() {
 	b.observing <- false
 }
 
-// Run single task with `BucketTask`
-func (b *BucketRunner) run(ctx context.Context, task BucketTask, client Bucket, config BucketConfig) error {
+// Run single task with `Task`
+func (b *Bucket) run(ctx context.Context, task internal.Task, client bucket.Bucket, config bucket.Config) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, task.Timeout)
 	defer cancel()
 
@@ -157,8 +146,8 @@ func (b *BucketRunner) run(ctx context.Context, task BucketTask, client Bucket, 
 	}
 }
 
-func InitRunnerWithBuckets(configs []BucketConfig, debug bool) (Runner, error) {
-	var runner = &BucketRunner{
+func Init(configs []bucket.Config, debug bool) (Runner, error) {
+	var runner = &Bucket{
 		observing: make(chan bool),
 		Debug:     debug,
 	}

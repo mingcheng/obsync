@@ -15,15 +15,16 @@ import (
 	"log"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 type OSSBucket struct {
 	Client *oss.Client
-	Config *obsync.BucketConfig
+	Config *bucket.Config
 }
 
-func (o *OSSBucket) Put(task obsync.BucketTask) error {
+func (o *OSSBucket) Put(task internal.Task) error {
 	bucket, err := o.GetBucket()
 	if err != nil {
 		log.Println(err)
@@ -68,7 +69,7 @@ func (o *OSSBucket) GetBucket() (*oss.Bucket, error) {
 }
 
 func init() {
-	obsync.RegisterBucket("oss", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("oss", func(config bucket.Config) (bucket.Bucket, error) {
 		client, err := oss.New(config.EndPoint, config.Key, config.Secret)
 		if err != nil {
 			return nil, err

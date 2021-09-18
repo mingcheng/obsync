@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
 )
@@ -17,7 +18,7 @@ type putRet struct {
 }
 
 type QiNiuBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 	Mac    *qbox.Mac
 }
 
@@ -51,7 +52,7 @@ func (t QiNiuBucket) Exists(path string) bool {
 	}
 }
 
-func (t QiNiuBucket) Put(task obsync.BucketTask) error {
+func (t QiNiuBucket) Put(task internal.Task) error {
 	formUploader := storage.NewFormUploader(&storage.Config{
 		UseHTTPS: true,
 	})
@@ -68,7 +69,7 @@ func (t QiNiuBucket) Put(task obsync.BucketTask) error {
 	return nil
 }
 
-func (t QiNiuBucket) UploadToken(task obsync.BucketTask) string {
+func (t QiNiuBucket) UploadToken(task internal.Task) string {
 	putPolicy := storage.PutPolicy{
 		Scope:      fmt.Sprintf("%s:%s", t.Config.Name, task.Key),
 		Expires:    uint32(t.Config.Timeout),
@@ -79,7 +80,7 @@ func (t QiNiuBucket) UploadToken(task obsync.BucketTask) string {
 }
 
 func init() {
-	obsync.RegisterBucket("qiniu", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("qiniu", func(config bucket.Config) (bucket.Bucket, error) {
 		return QiNiuBucket{
 			Config: config,
 			Mac:    qbox.NewMac(config.Key, config.Secret),

@@ -14,11 +14,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 )
 
 type TestBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 }
 
 func (t TestBucket) Info() (interface{}, error) {
@@ -29,13 +30,13 @@ func (t TestBucket) Exists(path string) bool {
 	return false
 }
 
-func (t TestBucket) Put(task obsync.BucketTask) error {
+func (t TestBucket) Put(task internal.Task) error {
 	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 	return nil
 }
 
 func init() {
-	obsync.RegisterBucket("test", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("test", func(config bucket.Config) (bucket.Bucket, error) {
 		return TestBucket{
 			Config: config,
 		}, nil

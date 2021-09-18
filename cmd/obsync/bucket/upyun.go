@@ -16,12 +16,13 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 	"github.com/upyun/go-sdk/upyun"
 )
 
 type UpyunBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 	Client *upyun.UpYun
 }
 
@@ -37,7 +38,7 @@ func (t UpyunBucket) Exists(path string) bool {
 	}
 }
 
-func (t UpyunBucket) Put(task obsync.BucketTask) error {
+func (t UpyunBucket) Put(task internal.Task) error {
 	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
 
 	if t.Exists(task.Key) {
@@ -61,7 +62,7 @@ func (t UpyunBucket) Put(task obsync.BucketTask) error {
 }
 
 func init() {
-	obsync.RegisterBucket("upyun", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("upyun", func(config bucket.Config) (bucket.Bucket, error) {
 		client := upyun.NewUpYun(&upyun.UpYunConfig{
 			Bucket:   config.Name,
 			Operator: config.Key,

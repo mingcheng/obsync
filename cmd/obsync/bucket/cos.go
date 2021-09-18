@@ -18,12 +18,13 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/mingcheng/obsync"
+	"github.com/mingcheng/obsync/bucket"
+	"github.com/mingcheng/obsync/internal"
 	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
 type COSBucket struct {
-	Config obsync.BucketConfig
+	Config bucket.Config
 	Client *cos.Client
 }
 
@@ -50,7 +51,7 @@ func (t COSBucket) Exists(path string) bool {
 	}
 }
 
-func (t COSBucket) Put(task obsync.BucketTask) error {
+func (t COSBucket) Put(task internal.Task) error {
 	fd, err := os.Open(task.Local)
 	if err != nil {
 		log.Printf("open file with error: %v", err)
@@ -74,7 +75,7 @@ func (t COSBucket) Put(task obsync.BucketTask) error {
 }
 
 func init() {
-	obsync.RegisterBucket("cos", func(config obsync.BucketConfig) (obsync.Bucket, error) {
+	bucket.Register("cos", func(config bucket.Config) (bucket.Bucket, error) {
 		u, _ := url.Parse(config.EndPoint)
 		b := &cos.BaseURL{BucketURL: u}
 		c := cos.NewClient(b, &http.Client{

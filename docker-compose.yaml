@@ -1,8 +1,11 @@
-version: "2"
+version: "3"
 services:
   obsync:
-    image: docker.pkg.github.com/mingcheng/obsync/obsync:latest
-    container_name: obsync
+    build:
+      context: .
+      args:
+        GITEA_TOKEN: $GITEA_TOKEN
+    image: ghcr.io/mingcheng/obsync:latest
     volumes:
       - ./obsync.json:/etc/obsync.json:ro
       - ${HOME}/backups:/backups
