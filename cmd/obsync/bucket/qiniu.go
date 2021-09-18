@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
-	"github.com/mingcheng/obsync/internal"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
 )
@@ -52,7 +52,7 @@ func (t QiNiuBucket) Exists(path string) bool {
 	}
 }
 
-func (t QiNiuBucket) Put(task internal.Task) error {
+func (t QiNiuBucket) Put(task obsync.Task) error {
 	formUploader := storage.NewFormUploader(&storage.Config{
 		UseHTTPS: true,
 	})
@@ -69,7 +69,7 @@ func (t QiNiuBucket) Put(task internal.Task) error {
 	return nil
 }
 
-func (t QiNiuBucket) UploadToken(task internal.Task) string {
+func (t QiNiuBucket) UploadToken(task obsync.Task) string {
 	putPolicy := storage.PutPolicy{
 		Scope:      fmt.Sprintf("%s:%s", t.Config.Name, task.Key),
 		Expires:    uint32(t.Config.Timeout),
