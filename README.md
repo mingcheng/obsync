@@ -1,19 +1,10 @@
-<!--
-  File: README.md
-  Author: Ming Cheng<mingcheng@outlook.com>
-
-  Created Date: Monday, June 10th 2019, 10:46:14 am
-  Last Modified: Monday, June 17th 2019, 4:10:42 pm
-
-  http://www.opensource.org/licenses/MIT
--->
-
 # Obsync - 主流公有云对象存储服务同步工具
 
 ![screenshots.png](screenshots.png)
 
 ## 更新历史
 
+- 20210918 更新 Golang 的编译版本，重构部分代码
 - 20200524 修改代码结构，增加 Standalone 定时同步
 - 20190709 提供腾讯云（COS）、七牛云、又拍云同步功能
 - 20190706 抽象接口，提供华为云、阿里云同步功能
