@@ -14,7 +14,7 @@ name: build_and_run_on_docker
 
 steps:
   - name: build
-    image: golang:1.16
+    image: golang:1.17
     environment:
       GOPROXY: https://goproxy.cn
     commands:
@@ -43,7 +43,7 @@ steps:
       custom_dns: 119.29.29.29
       tags:
         - latest
-        - 1.2.0
+        - 1.2.1
 
 volumes:
   - name: docker-sock
