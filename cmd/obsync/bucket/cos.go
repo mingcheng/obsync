@@ -28,6 +28,14 @@ type COSBucket struct {
 	Client *cos.Client
 }
 
+func (t COSBucket) OnStart(ctx context.Context) error {
+	return nil
+}
+
+func (t COSBucket) OnStop(ctx context.Context) error {
+	return nil
+}
+
 func (t COSBucket) Info() (interface{}, error) {
 	s, _, err := t.Client.Service.Get(context.Background())
 	if err != nil {

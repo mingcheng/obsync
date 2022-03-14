@@ -22,6 +22,14 @@ type QiNiuBucket struct {
 	Mac    *qbox.Mac
 }
 
+func (t QiNiuBucket) OnStart(ctx context.Context) error {
+	return nil
+}
+
+func (t QiNiuBucket) OnStop(ctx context.Context) error {
+	return nil
+}
+
 func (t QiNiuBucket) Info() (interface{}, error) {
 	manager := storage.NewBucketManager(t.Mac, &storage.Config{
 		UseHTTPS: true,

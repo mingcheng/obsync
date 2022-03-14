@@ -41,14 +41,20 @@ func (b *Bucket) AddBucket(config bucket.Config) error {
 		return err
 	}
 
-	bucket, err := callback(config)
+	bucketHandler, err := callback(config)
 	if err != nil {
 		return err
 	}
 
-	b.buckets = append(b.buckets, bucket)
+	err = bucketHandler.OnStart(context.Background())
+	if err != nil {
+		return err
+	}
+
+	b.buckets = append(b.buckets, bucketHandler)
 	b.taskPool = append(b.taskPool, make(chan obsync.Task, config.Thread))
 	b.configs = append(b.configs, config)
+
 	return nil
 }
 
@@ -108,6 +114,13 @@ func (b *Bucket) Stop() {
 		log.Println("stop observing")
 	}
 
+	for _, v := range b.buckets {
+		err := v.OnStop(context.Background())
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}
+
 	b.observing <- false
 }
 
@@ -119,6 +132,10 @@ func (b *Bucket) run(ctx context.Context, task obsync.Task, client bucket.Bucket
 	done := make(chan error)
 	go func() {
 		if task.Force || !client.Exists(task.Key) {
+			if config.SubDir != "" {
+				task.SubDir = config.SubDir
+			}
+
 			if err := client.Put(task); err != nil {
 				log.Println(err)
 				done <- err

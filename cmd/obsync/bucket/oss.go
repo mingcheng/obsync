@@ -11,6 +11,7 @@
 package bucket
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -24,14 +25,22 @@ type OSSBucket struct {
 	Config *bucket.Config
 }
 
+func (o *OSSBucket) OnStart(ctx context.Context) error {
+	return nil
+}
+
+func (o *OSSBucket) OnStop(ctx context.Context) error {
+	return nil
+}
+
 func (o *OSSBucket) Put(task obsync.Task) error {
-	bucket, err := o.GetBucket()
+	getBucket, err := o.GetBucket()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	if err = bucket.PutObjectFromFile(task.Key, task.Local); err != nil {
+	if err = getBucket.PutObjectFromFile(task.Key, task.Local); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -53,10 +62,10 @@ func (o *OSSBucket) Info() (interface{}, error) {
 }
 
 func (o *OSSBucket) Exists(path string) bool {
-	if bucket, err := o.GetBucket(); err != nil {
+	if getBucket, err := o.GetBucket(); err != nil {
 		return false
 	} else {
-		result, err := bucket.IsObjectExist(path)
+		result, err := getBucket.IsObjectExist(path)
 		if err != nil {
 			return false
 		}
