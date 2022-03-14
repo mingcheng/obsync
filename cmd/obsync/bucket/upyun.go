@@ -11,6 +11,7 @@
 package bucket
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -24,6 +25,14 @@ import (
 type UpyunBucket struct {
 	Config bucket.Config
 	Client *upyun.UpYun
+}
+
+func (t UpyunBucket) OnStart(ctx context.Context) error {
+	return nil
+}
+
+func (t UpyunBucket) OnStop(ctx context.Context) error {
+	return nil
 }
 
 func (t UpyunBucket) Info() (interface{}, error) {

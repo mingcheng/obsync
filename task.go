@@ -16,5 +16,6 @@ type Task struct {
 	Local   string
 	Key     string
 	Force   bool
+	SubDir  string
 	Timeout time.Duration
 }
