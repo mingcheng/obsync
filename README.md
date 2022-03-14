@@ -4,11 +4,12 @@
 
 ## 更新历史
 
+- 20220314 增加 阿里云盘 的同步功能；增加回调测试
 - 20210918 更新 Golang 的编译版本，重构部分代码
 - 20200524 修改代码结构，增加 Standalone 定时同步
 - 20190709 提供腾讯云（COS）、七牛云、又拍云同步功能
 - 20190706 抽象接口，提供华为云、阿里云同步功能
-- 20190614 增加 PID 文件支持
+- <del>20190614 增加 PID 文件支持</del>（已废弃）
 - 20190610 修复一些问题，并增加超时参数
 - 20190605 完成基本功能
 
@@ -109,13 +110,27 @@ func (t TestBucket) Put(task obsync.BucketTask) {
 
 // 初始化以及注册插件
 func init() {
-	obsync.RegisterBucket("test", func(config obsync.BucketConfig) (obsync.Bucket, error) {
-		return TestBucket{
-			Config: config,
-		}, nil
-	})
+obsync.RegisterBucket("test", func (config obsync.BucketConfig) (obsync.Bucket, error) {
+return TestBucket{
+Config: config,
+}, nil
+})
 }
 ```
+
+注，v1.3.0 以后，增加了两个回调接口：
+
+```go
+func (t TestBucket) OnStart(ctx context.Context) error {
+return nil
+}
+
+func (t TestBucket) OnStop(ctx context.Context) error {
+return nil
+}
+```
+
+分别对应在开始以及结束的时候的回调执行，方便扩展以及资源的管理。
 
 以上，实现了以后就可以编写对应的配置文件即可开始使用。其中的多线程的处理以及实现在 `task.go` 这个文件中（如果有需要您可以扩展它，欢迎提交 PR 给我）。
 
