@@ -33,7 +33,7 @@ var (
 )
 
 var (
-	configFilePath = flag.String("f", "", "config file path")
+	configFilePath = flag.String("f", "/etc/obsync.json", "config file path")
 	printVersion   = flag.Bool("v", false, "print version and exit")
 	printInfo      = flag.Bool("i", false, "print bucket info and exit")
 )
@@ -44,12 +44,12 @@ func PrintVersion() {
 }
 
 func Runner(config *Config) (runner.Runner, error) {
-	runner, err := runner.Init(config.Buckets, os.Getenv("DEBUG") != "")
+	init, err := runner.Init(config.Buckets, os.Getenv("DEBUG") != "")
 	if err != nil {
 		return nil, err
 	}
 
-	return runner, nil
+	return init, nil
 }
 
 func init() {

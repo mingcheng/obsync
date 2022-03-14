@@ -31,5 +31,6 @@ RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.li
 	&& apt -y autoremove
 
 COPY --from=builder /usr/bin/obsync /bin/obsync
+VOLUME /etc/obsync.json
 
 ENTRYPOINT ["dumb-init", "/bin/obsync"]
