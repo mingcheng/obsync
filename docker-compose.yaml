@@ -5,7 +5,7 @@ services:
       context: .
       args:
         GITEA_TOKEN: $GITEA_TOKEN
-    image: ghcr.io/mingcheng/obsync:latest
+    image: swr.cn-east-2.myhuaweicloud.com/mingcheng/obsync
     environment:
       INTERVAL: 12
     volumes:
