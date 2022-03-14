@@ -11,6 +11,7 @@
 package bucket
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,6 +25,14 @@ import (
 type OBSBucket struct {
 	Client *obs.ObsClient
 	Config bucket.Config
+}
+
+func (o *OBSBucket) OnStart(ctx context.Context) error {
+	return nil
+}
+
+func (o *OBSBucket) OnStop(ctx context.Context) error {
+	return nil
 }
 
 // Put a file to obs bucket

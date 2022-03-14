@@ -38,12 +38,12 @@ steps:
       repo: ghcr.io/mingcheng/obsync
       username: mingcheng
       password:
-        from_secret: cr_pat
+        from_secret: docker_password
       dockerfile: Dockerfile
       custom_dns: 119.29.29.29
       tags:
         - latest
-        - 1.2.1
+        - 1.3.0
 
 volumes:
   - name: docker-sock

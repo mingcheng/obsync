@@ -6,6 +6,8 @@ services:
       args:
         GITEA_TOKEN: $GITEA_TOKEN
     image: ghcr.io/mingcheng/obsync:latest
+    environment:
+      INTERVAL: 12
     volumes:
       - ./obsync.json:/etc/obsync.json:ro
       - ${HOME}/backups:/backups

@@ -11,6 +11,7 @@
 package bucket
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mingcheng/obsync"
@@ -27,12 +28,15 @@ type (
 		EndPoint string `json:"endpoint"`
 		Timeout  uint64 `json:"timeout"`
 		Thread   uint64 `json:"thread"`
+		SubDir   string `json:"subdir"`
 	}
 
 	Bucket interface {
 		Info() (interface{}, error)
 		Exists(path string) bool
 		Put(task obsync.Task) error
+		OnStart(ctx context.Context) error
+		OnStop(ctx context.Context) error
 	}
 
 	BucketFunc func(c Config) (Bucket, error)
