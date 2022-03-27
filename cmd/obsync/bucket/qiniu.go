@@ -17,6 +17,7 @@ type putRet struct {
 	Fsize int
 }
 
+// QiNiuBucket implements bucket.Bucket interface
 type QiNiuBucket struct {
 	Config bucket.Config
 	Mac    *qbox.Mac
@@ -65,7 +66,7 @@ func (t QiNiuBucket) Put(task obsync.Task) error {
 		UseHTTPS: true,
 	})
 
-	ret := putRet{}
+	var ret putRet
 	err := formUploader.PutFile(context.TODO(), &ret, t.UploadToken(task), task.Key, task.Local, &storage.PutExtra{})
 
 	if err != nil {
