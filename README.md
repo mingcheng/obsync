@@ -87,7 +87,7 @@ docker pull docker.pkg.github.com/mingcheng/obsync/obsync:latest
 
 其中，`test.go` 是个 `TestBucket` 顾名思义它什么都不用做，它的「上传操作」就是简单的 Sleep 几秒而已，我们可以很容易的拿它来作为快速实现的模板。
 
-```golang
+```go
 // 定义个 Bucket 的名称
 type TestBucket struct {
 	Config obsync.BucketConfig
@@ -110,11 +110,11 @@ func (t TestBucket) Put(task obsync.BucketTask) {
 
 // 初始化以及注册插件
 func init() {
-obsync.RegisterBucket("test", func (config obsync.BucketConfig) (obsync.Bucket, error) {
-return TestBucket{
-Config: config,
-}, nil
-})
+  obsync.RegisterBucket("test", func (config obsync.BucketConfig) (obsync.Bucket, error) {
+    return TestBucket{
+      Config: config,
+    }, nil
+  })
 }
 ```
 
@@ -122,11 +122,11 @@ Config: config,
 
 ```go
 func (t TestBucket) OnStart(ctx context.Context) error {
-return nil
+  return nil
 }
 
 func (t TestBucket) OnStop(ctx context.Context) error {
-return nil
+  return nil
 }
 ```
 

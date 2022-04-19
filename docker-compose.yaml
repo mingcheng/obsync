@@ -9,6 +9,6 @@ services:
     environment:
       INTERVAL: 12
     volumes:
-      - ./obsync.json:/etc/obsync.json:ro
-      - ${HOME}/backups:/backups
+      - ./config.json:/etc/obsync.json:ro
+      - ./data:/data:ro
     restart: unless-stopped
