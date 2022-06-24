@@ -11,10 +11,6 @@ import (
 	"github.com/mingcheng/aliyundrive/store"
 	"github.com/mingcheng/obsync"
 	"github.com/mingcheng/obsync/bucket"
-	"log"
-	"path"
-	"sync"
-	"time"
 )
 
 type AliyunDrive struct {
