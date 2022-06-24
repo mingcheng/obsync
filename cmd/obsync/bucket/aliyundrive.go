@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/mingcheng/aliyundrive"
@@ -18,6 +19,7 @@ type AliyunDrive struct {
 	DefaultDriveID string
 	ticker         *time.Ticker
 	done           chan bool
+	uploadMutex    sync.Mutex
 }
 
 func (t *AliyunDrive) refreshToken(ctx context.Context) error {
@@ -76,6 +78,9 @@ func (t *AliyunDrive) Exists(path string) bool {
 }
 
 func (t *AliyunDrive) Put(task obsync.Task) error {
+	t.uploadMutex.Lock()
+	defer t.uploadMutex.Unlock()
+
 	client := t.client
 
 	pathName := path.Join(task.SubDir, task.Key)

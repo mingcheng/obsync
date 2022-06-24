@@ -14,7 +14,7 @@ name: build_and_run_on_docker
 
 steps:
   - name: build
-    image: golang:1.17
+    image: golang:1.18
     environment:
       GOPROXY: https://goproxy.cn
     commands:
@@ -42,7 +42,7 @@ steps:
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.3.0
+        - 1.3.1
 
   - name: publish-to-huaweicloud
     image: plugins/docker
@@ -66,7 +66,7 @@ steps:
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.3.0
+        - 1.3.1
 
 volumes:
   - name: docker-sock

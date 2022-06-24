@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Tuesday, July 9th 2019, 10:41:02 am
- * Last Modified: Tuesday, July 9th 2019, 10:50:29 am
+ * Last Modified: Tuesday, April 19th 2022, 2:32:09 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -22,19 +22,23 @@ import (
 	"github.com/upyun/go-sdk/upyun"
 )
 
+// UpyunBucket is a bucket implementation for Upyun
 type UpyunBucket struct {
 	Config bucket.Config
 	Client *upyun.UpYun
 }
 
+// OnStart to run when the bucket is started
 func (t UpyunBucket) OnStart(ctx context.Context) error {
 	return nil
 }
 
+// OnStop to stop the bucket
 func (t UpyunBucket) OnStop(ctx context.Context) error {
 	return nil
 }
 
+// Info returns information about the bucket
 func (t UpyunBucket) Info() (interface{}, error) {
 	return t.Client.Usage()
 }

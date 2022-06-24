@@ -4,7 +4,8 @@ import (
 	"testing"
 )
 
-func TestTestBucket_Info(t *testing.T) {
+// TestBucket_Info to test bucket information functions
+func TestBucket_Info(t *testing.T) {
 	bucket := TestBucket{}
 	if _, err := bucket.Info(); err != nil {
 		t.Error(err)
