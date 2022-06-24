@@ -8,6 +8,7 @@ import (
 	"github.com/mingcheng/obsync/bucket"
 	"log"
 	"path"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type AliyunDrive struct {
 	DefaultDriveID string
 	ticker         *time.Ticker
 	done           chan bool
+	uploadLock     sync.Mutex
 }
 
 func (r *AliyunDrive) refreshToken(ctx context.Context) error {
@@ -72,6 +74,9 @@ func (t *AliyunDrive) Exists(path string) bool {
 }
 
 func (t *AliyunDrive) Put(task obsync.Task) error {
+	t.uploadLock.Lock()
+	defer t.uploadLock.Unlock()
+
 	client := t.client
 
 	pathName := path.Join(task.SubDir, task.Key)
