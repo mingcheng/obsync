@@ -18,7 +18,7 @@ steps:
     environment:
       GOPROXY: https://goproxy.cn
     commands:
-      - make clean test build
+      - make build
       - ./target/obsync -v
 
   - name: publish-to-ghcr
@@ -42,7 +42,7 @@ steps:
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.3.1
+        - 1.3.2
 
   - name: publish-to-huaweicloud
     image: plugins/docker
@@ -66,7 +66,7 @@ steps:
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.3.1
+        - 1.3.2
 
 volumes:
   - name: docker-sock
