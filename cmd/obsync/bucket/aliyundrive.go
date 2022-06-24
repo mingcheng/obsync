@@ -2,6 +2,11 @@ package bucket
 
 import (
 	"context"
+	"log"
+	"path"
+	"sync"
+	"time"
+
 	"github.com/mingcheng/aliyundrive"
 	"github.com/mingcheng/aliyundrive/store"
 	"github.com/mingcheng/obsync"
@@ -18,39 +23,42 @@ type AliyunDrive struct {
 	DefaultDriveID string
 	ticker         *time.Ticker
 	done           chan bool
-	uploadLock     sync.Mutex
+	uploadMutex    sync.Mutex
 }
 
-func (r *AliyunDrive) refreshToken(ctx context.Context) error {
-	resp, err := r.client.RefreshToken(ctx, &aliyundrive.RefreshTokenReq{
-		RefreshToken: r.Config.Key,
+func (t *AliyunDrive) refreshToken(ctx context.Context) error {
+	resp, err := t.client.RefreshToken(ctx, &aliyundrive.RefreshTokenReq{
+		RefreshToken: t.Config.Key,
 	})
 
 	if err != nil {
 		return err
 	}
 
-	r.DefaultDriveID = resp.DefaultDriveID
+	log.Printf("mark default drive id is %s", resp.DefaultDriveID)
+	t.DefaultDriveID = resp.DefaultDriveID
 	return nil
 }
 
-func (r *AliyunDrive) OnStart(ctx context.Context) error {
-	if err := r.refreshToken(ctx); err != nil {
+func (t *AliyunDrive) OnStart(ctx context.Context) error {
+	if err := t.refreshToken(ctx); err != nil {
 		return err
 	}
 
-	r.ticker = time.NewTicker(time.Hour)
-	r.done = make(chan bool)
+	t.ticker = time.NewTicker(time.Hour)
+	t.done = make(chan bool)
 
 	go func() {
 		for {
 			select {
-			case <-r.done:
+			case <-t.done:
 				return
-			case <-r.ticker.C:
-				err := r.refreshToken(context.Background())
+			case <-t.ticker.C:
+				err := t.refreshToken(context.Background())
 				if err != nil {
 					log.Println(err)
+				} else {
+					log.Printf("update refresh token is successful")
 				}
 			}
 		}
@@ -59,9 +67,9 @@ func (r *AliyunDrive) OnStart(ctx context.Context) error {
 	return nil
 }
 
-func (r *AliyunDrive) OnStop(ctx context.Context) error {
-	r.ticker.Stop()
-	r.done <- true
+func (t *AliyunDrive) OnStop(ctx context.Context) error {
+	t.ticker.Stop()
+	t.done <- true
 	return nil
 }
 
@@ -74,8 +82,8 @@ func (t *AliyunDrive) Exists(path string) bool {
 }
 
 func (t *AliyunDrive) Put(task obsync.Task) error {
-	t.uploadLock.Lock()
-	defer t.uploadLock.Unlock()
+	t.uploadMutex.Lock()
+	defer t.uploadMutex.Unlock()
 
 	client := t.client
 
@@ -95,7 +103,9 @@ func (t *AliyunDrive) Put(task obsync.Task) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("create remote folder %s is successful, file id is %s", resp.FileName, resp.FileID)
 
+	log.Printf("start upload local file %s to %s", task.Local, task.Key)
 	_, err = client.UploadFile(context.Background(), &aliyundrive.UploadFileReq{
 		DriveID:       t.DefaultDriveID,
 		ParentID:      resp.FileID,
@@ -107,13 +117,13 @@ func (t *AliyunDrive) Put(task obsync.Task) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("upload file is finished, bye~")
 
 	return nil
 }
 
 func init() {
 	bucket.Register("aliyundrive", func(config bucket.Config) (bucket.Bucket, error) {
-
 		return &AliyunDrive{
 			Config: config,
 			client: aliyundrive.New(aliyundrive.WithStore(store.NewMemoryStore())),
