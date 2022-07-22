@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Tuesday, July 9th 2019, 10:41:02 am
- * Last Modified: Tuesday, April 19th 2022, 2:32:09 pm
+ * Last Modified: Friday, July 22nd 2022, 2:00:13 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -13,10 +13,6 @@ package buckets
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"math/rand"
-	"time"
-
 	"github.com/mingcheng/obsync"
 	"github.com/upyun/go-sdk/upyun"
 )
@@ -32,6 +28,7 @@ func (t UpyunBucket) Info(_ context.Context) (interface{}, error) {
 	return t.Client.Usage()
 }
 
+// Exists to check if specified path exists
 func (t UpyunBucket) Exists(_ context.Context, path string) bool {
 	if info, err := t.Client.GetInfo(path); err != nil {
 		return false
@@ -40,12 +37,10 @@ func (t UpyunBucket) Exists(_ context.Context, path string) bool {
 	}
 }
 
+// Put to update local file to bucket with specified key
 func (t UpyunBucket) Put(ctx context.Context, filePath, key string) (err error) {
-	time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
-
 	if t.Exists(ctx, key) {
 		err = fmt.Errorf("%s is exists", key)
-		log.Error(err)
 		return
 	}
 
@@ -54,15 +49,11 @@ func (t UpyunBucket) Put(ctx context.Context, filePath, key string) (err error) 
 		LocalPath: filePath,
 	})
 
-	if err != nil {
-		log.Error(err)
-	}
-
 	return
 }
 
 func init() {
-	obsync.RegisterBucketClientFunc("upyun", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.RegisterBucketClientFunc("upyun", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 		client := upyun.NewUpYun(&upyun.UpYunConfig{
 			Bucket:   config.Name,
 			Operator: config.Key,

@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Monday, July 8th 2019, 5:07:09 pm
- * Last Modified: Tuesday, July 9th 2019, 10:50:12 am
+ * Last Modified: Friday, July 22nd 2022, 2:03:33 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -13,10 +13,11 @@ package buckets
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mingcheng/obsync"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -27,6 +28,7 @@ type COSBucket struct {
 	Client *cos.Client
 }
 
+// Info to get bucket information
 func (t COSBucket) Info(ctx context.Context) (interface{}, error) {
 	s, _, err := t.Client.Service.Get(context.Background())
 	if err != nil {
@@ -42,6 +44,7 @@ func (t COSBucket) Info(ctx context.Context) (interface{}, error) {
 	return nil, fmt.Errorf("buckets %s not found", t.Config.Name)
 }
 
+// Exists to check if the path exists in the bucket
 func (t COSBucket) Exists(ctx context.Context, path string) bool {
 	resp, err := t.Client.Object.Head(ctx, path, nil)
 	if err != nil {
@@ -51,6 +54,7 @@ func (t COSBucket) Exists(ctx context.Context, path string) bool {
 	return resp.StatusCode == http.StatusOK
 }
 
+// Put to upload local file to bucket within specified key
 func (t COSBucket) Put(ctx context.Context, localFile, key string) error {
 	fd, err := os.Open(localFile)
 	if err != nil {
@@ -75,7 +79,9 @@ func (t COSBucket) Put(ctx context.Context, localFile, key string) error {
 }
 
 func init() {
-	obsync.RegisterBucketClientFunc("cos", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	const Name = "cos"
+	log.Trace("start register bucket client which type is %s", Name)
+	obsync.RegisterBucketClientFunc(Name, func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 		u, _ := url.Parse(config.EndPoint)
 		b := &cos.BaseURL{BucketURL: u}
 		c := cos.NewClient(b, &http.Client{

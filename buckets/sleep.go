@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Saturday, July 6th 2019, 11:19:12 pm
- * Last Modified: Sunday, July 7th 2019, 5:40:21 pm
+ * Last Modified: Friday, July 22nd 2022, 2:00:15 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -12,9 +12,10 @@ package buckets
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/mingcheng/obsync"
 )

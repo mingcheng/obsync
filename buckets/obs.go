@@ -3,7 +3,7 @@
  * Author: Ming Cheng<mingcheng@outlook.com>
  *
  * Created Date: Friday, June 21st 2019, 11:31:48 am
- * Last Modified: Saturday, July 6th 2019, 11:27:19 pm
+ * Last Modified: Friday, July 22nd 2022, 2:00:42 pm
  *
  * http://www.opensource.org/licenses/MIT
  */
@@ -13,8 +13,9 @@ package buckets
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 	"github.com/mingcheng/obsync"

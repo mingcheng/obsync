@@ -1,8 +1,19 @@
+/**
+ * File: qiniu.go
+ * Author: Ming Cheng<mingcheng@outlook.com>
+ *
+ * Created Date: Friday, June 24th 2022, 11:09:00 pm
+ * Last Modified: Friday, July 22nd 2022, 2:07:24 pm
+ *
+ * http://www.opensource.org/licenses/MIT
+ */
+
 package buckets
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/qiniu/go-sdk/v7/auth/qbox"
 	log "github.com/sirupsen/logrus"
 
@@ -23,6 +34,7 @@ type QiNiuBucket struct {
 	Mac    *qbox.Mac
 }
 
+// Info implements form buckets.Bucket interface
 func (t QiNiuBucket) Info(ctx context.Context) (interface{}, error) {
 	manager := storage.NewBucketManager(t.Mac, &storage.Config{
 		UseHTTPS: true,
@@ -41,6 +53,7 @@ func (t QiNiuBucket) Info(ctx context.Context) (interface{}, error) {
 	}
 }
 
+// Exists to check if specified path is existed
 func (t QiNiuBucket) Exists(ctx context.Context, path string) bool {
 	manager := storage.NewBucketManager(t.Mac, &storage.Config{
 		UseHTTPS: true,
@@ -53,6 +66,7 @@ func (t QiNiuBucket) Exists(ctx context.Context, path string) bool {
 	}
 }
 
+// Put to upload local file into bucket within specified key
 func (t QiNiuBucket) Put(ctx context.Context, localFile, key string) (err error) {
 	formUploader := storage.NewFormUploader(&storage.Config{
 		UseHTTPS: true,
@@ -68,6 +82,7 @@ func (t QiNiuBucket) Put(ctx context.Context, localFile, key string) (err error)
 	return
 }
 
+// UploadToken to update the key from specified scope
 func (t QiNiuBucket) UploadToken(key string) string {
 	putPolicy := storage.PutPolicy{
 		Scope:      fmt.Sprintf("%s:%s", t.Config.Name, key),
@@ -79,6 +94,7 @@ func (t QiNiuBucket) UploadToken(key string) string {
 }
 
 func init() {
+	log.Trace("register bucket client callback which type `qiniu`")
 	obsync.RegisterBucketClientFunc("qiniu", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 		return QiNiuBucket{
 			Config: &config,
