@@ -19,7 +19,7 @@ steps:
       GOPROXY: https://goproxy.cn
     commands:
       - make build
-      - ./target/obsync -v
+      - ./target/obsync -h
 
   - name: publish-to-ghcr
     image: plugins/docker
@@ -36,37 +36,14 @@ steps:
     settings:
       registry: ghcr.io
       repo: ghcr.io/mingcheng/obsync
-      username: mingcheng
-      password:
-        from_secret: docker_password
-      dockerfile: Dockerfile
-      tags:
-        - latest
-        - 1.3.2
-
-  - name: publish-to-huaweicloud
-    image: plugins/docker
-    volumes:
-      - name: docker-sock
-        path: /var/run/docker.sock
-    environment:
-      GOPROXY: "https://goproxy.cn,direct"
-    when:
-      branch:
-        - master
-      event:
-        - push
-    settings:
-      registry: swr.cn-east-2.myhuaweicloud.com
-      repo: swr.cn-east-2.myhuaweicloud.com/mingcheng/obsync
       username:
-        from_secret: huawei_docker_username
+        from_secret: ghcr_docker_username
       password:
-        from_secret: huawei_docker_password
+        from_secret: ghcr_docker_password
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.3.2
+        - 1.4.0
 
 volumes:
   - name: docker-sock

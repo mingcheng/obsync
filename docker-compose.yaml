@@ -3,12 +3,8 @@ services:
   obsync:
     build:
       context: .
-      args:
-        GITEA_TOKEN: $GITEA_TOKEN
-    image: swr.cn-east-2.myhuaweicloud.com/mingcheng/obsync
-    environment:
-      INTERVAL: 12
+    image: ghcr.io/mingcheng/obsync
     volumes:
-      - ./config.json:/etc/obsync.json:ro
+      - ./example.yaml:/etc/obsync.yaml:ro
       - ./data:/data:ro
-    restart: unless-stopped
+    restart: on-failure
