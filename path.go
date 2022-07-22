@@ -1,6 +1,7 @@
 package obsync
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +29,7 @@ func prefixPath(path string) bool {
 }
 
 // TasksByPath get tasks by the specified directory, ignore "." prefix files
-func (r *Runner) TasksByPath(rootDir string, client *BucketClient) (tasks []*Task, err error) {
+func (r *Runner) TasksByPath(rootDir string, client *BucketClient, bucketConfig *BucketConfig) (tasks []*Task, err error) {
 	var (
 		absPath string
 	)
@@ -48,10 +49,15 @@ func (r *Runner) TasksByPath(rootDir string, client *BucketClient) (tasks []*Tas
 		if !info.IsDir() {
 			pathKey := strings.Replace(path, absPath, "", 1)
 
+			key := pathKey[1:]
+			if bucketConfig.SubDir != "" {
+				key = fmt.Sprintf("%s/%s", bucketConfig.SubDir, key)
+			}
+
 			// append new task to the list within directly configuration
 			tasks = append(tasks, &Task{
 				FilePath:  path,
-				Key:       pathKey[1:],
+				Key:       key,
 				Client:    client,
 				Overrides: r.config.Overrides,
 			})

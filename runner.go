@@ -49,7 +49,7 @@ func (r *Runner) Start(ctx context.Context) (err error) {
 			continue
 		}
 
-		tasks, err := r.TasksByPath(r.config.LocalPath, &client)
+		tasks, err := r.TasksByPath(r.config.LocalPath, &client, &config)
 		if err != nil {
 			log.Errorf("get task failed: %v", err)
 			continue

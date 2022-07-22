@@ -10,3 +10,4 @@ Thumbs.db
 /go.work*
 /obsync
 /.vscode/*.log
+/*_test.yaml

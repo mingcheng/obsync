@@ -22,6 +22,7 @@ type BucketConfig struct {
 	Key      string `json:"key" yaml:"key"`
 	Secret   string `json:"secret" yaml:"secret"`
 	EndPoint string `json:"endpoint" yaml:"endpoint"`
+	SubDir   string `json:"subdir" yaml:"subdir"`
 }
 
 type BucketClient interface {
