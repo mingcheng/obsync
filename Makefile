@@ -1,11 +1,15 @@
 PROJECT="obsync"
 VERSION=$(shell date +%Y%m%d)
+COMMIT_HASH=$(shell git rev-parse --short HEAD)
 
 TARGET=./target
 SRC=./cmd/obsync
 BINARY=./obsync
 
-GO_FLAGS=-ldflags="-X main.version=$(VERSION) -X 'main.commit=`git rev-parse HEAD`' -X 'main.date=`date`'"
+GO_FLAGS=-ldflags=" \
+	-X 'main.version=$(VERSION)' \
+	-X 'main.commit=$(COMMIT_HASH)' \
+	-X 'main.date=$(shell date)'"
 GO=$(shell which go)
 
 build: cmd/obsync
