@@ -3,17 +3,17 @@ package obsync
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"github.com/Jeffail/tunny"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"sync"
 	"time"
-
-	"github.com/Jeffail/tunny"
 )
 
 // RunnerConfig represents a configuration for running
 type RunnerConfig struct {
 	LocalPath     string         `yaml:"path" json:"path"`
+	Description   string         `yaml:"description" json:"description"`
 	Overrides     bool           `yaml:"overrides" json:"overrides"`
 	Exclude       []string       `yaml:"exclude" json:"exclude"`
 	Timeout       time.Duration  `yaml:"timeout" json:"timeout"`
@@ -36,43 +36,47 @@ func (r *Runner) Start(ctx context.Context) (err error) {
 
 	var wg sync.WaitGroup
 
-	taskCtx, cancel := context.WithTimeout(ctx, r.config.Timeout)
-	defer cancel()
-
 	for index, config := range r.config.BucketConfigs {
 		clientFunc, err := NewBucketClientFunc(config.Type)
 		if err != nil {
-			logrus.Errorf("bucket which name is not supported: %v", err)
+			log.Errorf("bucket which name is not supported: %v", err)
 			continue
 		}
 
 		client, err := clientFunc(config)
 		if err != nil {
-			logrus.Errorf("new bucket client failed: %v", err)
+			log.Errorf("new bucket client failed: %v", err)
 			continue
 		}
 
 		tasks, err := r.TasksByPath(r.config.LocalPath, &client)
 		if err != nil {
-			logrus.Errorf("get task failed: %v", err)
+			log.Errorf("get task failed: %v", err)
 			continue
 		}
 		wg.Add(len(tasks))
 
-		logrus.Tracef("instance threads pool size: %d", threads)
+		log.Tracef("instance threads pool size: %d", threads)
 		pool := tunny.NewCallback(threads)
 
 		for _, t := range tasks {
-			logrus.Tracef("add task: %v", t)
 			go func(task *Task) {
 				defer wg.Done()
 
-				if _, err := pool.ProcessCtx(taskCtx, func() {
+				log.Tracef("bucket [%s] local path: [%s], remote key: [%s]",
+					config.Name, task.FilePath, task.Key)
+
+				if _, err := pool.ProcessCtx(ctx, func() {
+					// fork the new timeout context for running tasks
+					taskCtx, cancel := context.WithTimeout(ctx, r.config.Timeout)
+					defer cancel()
+
+					// start running tasks within the specified context
 					if err := task.Run(taskCtx); err != nil {
-						logrus.Error(err)
+						log.Error(err)
 					}
 				}); err != nil {
-					logrus.Error(err)
+					log.Error(err)
 				}
 			}(t)
 		}
@@ -88,7 +92,7 @@ func (r *Runner) Start(ctx context.Context) (err error) {
 func (r *Runner) Stop() (err error) {
 	for name, pool := range r.taskPool {
 		if pool == nil {
-			logrus.Debugf("closing task pool %v", name)
+			log.Debugf("closing task pool %v", name)
 			pool.Close()
 		}
 	}

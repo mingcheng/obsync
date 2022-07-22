@@ -13,15 +13,15 @@ package obsync
 import (
 	"context"
 	"fmt"
+	"sync"
 )
 
 type BucketConfig struct {
-	Type      string `json:"type" yaml:"type"`
-	Name      string `json:"name" yaml:"name"`
-	Key       string `json:"key" yaml:"key"`
-	Secret    string `json:"secret" yaml:"secret"`
-	Overrides bool   `json:"overrides" yaml:"overrides"`
-	EndPoint  string `json:"endpoint" yaml:"endpoint"`
+	Type     string `json:"type" yaml:"type"`
+	Name     string `json:"name" yaml:"name"`
+	Key      string `json:"key" yaml:"key"`
+	Secret   string `json:"secret" yaml:"secret"`
+	EndPoint string `json:"endpoint" yaml:"endpoint"`
 }
 
 type BucketClient interface {
@@ -36,7 +36,8 @@ type (
 )
 
 var (
-	newBucketClients = make(NewBucketClients)
+	newBucketClients  = make(NewBucketClients)
+	addClientFuncLock sync.Mutex
 )
 
 // AllSupportedBucketTypes to get all the registered buckets types.
@@ -50,6 +51,9 @@ func AllSupportedBucketTypes() (types []string) {
 
 // RegisterBucketClientFunc to register new type of bucket client
 func RegisterBucketClientFunc(typeName string, newClientFunc NewBucketClient) (err error) {
+	addClientFuncLock.Lock()
+	defer addClientFuncLock.Unlock()
+
 	if _, ok := newBucketClients[typeName]; ok {
 		return fmt.Errorf("bucket type name is %s already exists", typeName)
 	}
@@ -60,6 +64,9 @@ func RegisterBucketClientFunc(typeName string, newClientFunc NewBucketClient) (e
 
 // RemoveBucketClientFunc to unregister newBucketClients from local maps
 func RemoveBucketClientFunc(typeName string) error {
+	addClientFuncLock.Lock()
+	defer addClientFuncLock.Unlock()
+
 	if len(typeName) <= 0 || newBucketClients[typeName] == nil {
 		return fmt.Errorf("bucket type name %s does not exists", typeName)
 	}

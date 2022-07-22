@@ -6,6 +6,27 @@ import (
 	"strings"
 )
 
+func prefixPath(path string) bool {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+
+	if strings.HasPrefix(filepath.Base(absPath), ".") {
+		return true
+	}
+
+	if strings.HasPrefix(filepath.Base(filepath.Dir(absPath)), ".") {
+		return true
+	}
+
+	if absPath == "/" {
+		return false
+	}
+
+	return prefixPath(filepath.Dir(absPath))
+}
+
 // TasksByPath get tasks by the specified directory, ignore "." prefix files
 func (r *Runner) TasksByPath(rootDir string, client *BucketClient) (tasks []*Task, err error) {
 	var (
@@ -27,6 +48,7 @@ func (r *Runner) TasksByPath(rootDir string, client *BucketClient) (tasks []*Tas
 		if !info.IsDir() {
 			pathKey := strings.Replace(path, absPath, "", 1)
 
+			// append new task to the list within directly configuration
 			tasks = append(tasks, &Task{
 				FilePath:  path,
 				Key:       pathKey[1:],

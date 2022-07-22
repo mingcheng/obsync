@@ -11,6 +11,7 @@ import (
 var i int
 
 type sleepClient struct {
+	SleepDuration time.Duration
 }
 
 func (s sleepClient) Info(ctx context.Context) (interface{}, error) {
@@ -26,7 +27,7 @@ func (s sleepClient) Put(ctx context.Context, filePath, key string) error {
 
 	done := make(chan bool)
 	go func() {
-		time.Sleep(time.Millisecond * 2)
+		time.Sleep(s.SleepDuration)
 		done <- true
 	}()
 
@@ -42,7 +43,9 @@ func (s sleepClient) Put(ctx context.Context, filePath, key string) error {
 
 func init() {
 	_ = RegisterBucketClientFunc("sleep", func(config BucketConfig) (BucketClient, error) {
-		return &sleepClient{}, nil
+		return &sleepClient{
+			time.Second,
+		}, nil
 	})
 }
 
@@ -50,7 +53,7 @@ func TestRunner_Start(t *testing.T) {
 	runner, err := NewRunner(RunnerConfig{
 		LocalPath: ".",
 		Threads:   10,
-		Timeout:   time.Second,
+		Timeout:   time.Second * 2,
 		BucketConfigs: []BucketConfig{
 			{
 				Type: "sleep",

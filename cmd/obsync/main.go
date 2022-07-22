@@ -10,15 +10,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"log"
+	"github.com/mingcheng/obsync"
+	_ "github.com/mingcheng/obsync/buckets"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime"
-
-	"github.com/judwhite/go-svc"
-	_ "github.com/mingcheng/obsync/cmd/obsync/bucket"
-	"github.com/mingcheng/obsync/runner"
+	"strings"
+	"sync"
+	//"github.com/judwhite/go-svc"
 )
 
 const logo = `
@@ -33,26 +35,33 @@ var (
 )
 
 var (
-	configFilePath = flag.String("f", "/etc/obsync.json", "config file path")
+	configFilePath = flag.String("f", "/etc/obsync.yaml", "specified configuration file path, in yaml format")
 	printVersion   = flag.Bool("v", false, "print version and exit")
-	printInfo      = flag.Bool("i", false, "print bucket info and exit")
 )
 
 // PrintVersion that prints version and build time
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n\n", version, commit, date, runtime.GOARCH, runtime.GOOS)
-}
+	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v), built at %v on %v/%v \n",
+		version, commit, date, runtime.GOARCH, runtime.GOOS)
 
-func Runner(config *Config) (runner.Runner, error) {
-	init, err := runner.Init(config.Buckets, os.Getenv("DEBUG") != "")
-	if err != nil {
-		return nil, err
-	}
-
-	return init, nil
+	supportTypes := obsync.AllSupportedBucketTypes()
+	_, _ = fmt.Fprintf(os.Stderr, "support bucket types: %s\n\n", strings.Join(supportTypes, ", "))
 }
 
 func init() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+
+	if _, found := os.LookupEnv("DEBUG"); found {
+		log.SetLevel(log.TraceLevel)
+	} else {
+		log.SetLevel(log.ErrorLevel)
+	}
+
+	log.SetOutput(os.Stdout)
+
 	// show command line usage information
 	flag.Usage = func() {
 		fmt.Println(logo)
@@ -73,33 +82,41 @@ func main() {
 
 	config, err := NewConfig(*configFilePath)
 	if err != nil {
-		log.Panic(err)
-	}
-
-	// detect root directory
-	info, err := os.Stat(config.Root)
-	if os.IsNotExist(err) || !info.IsDir() {
-		log.Panicf("config root %s, is not exits or not a directory\n", config.Root)
-	}
-
-	r, err := Runner(config)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	if *printInfo {
-		info, _ := r.AllStatus()
-		for k, i := range info {
-			log.Println(k, i)
-		}
-
-		return
-	}
-
-	if err := svc.Run(&program{
-		Config: *config,
-		Runner: r,
-	}); err != nil {
 		log.Fatal(err)
 	}
+
+	if config.Log.Path != "" {
+		if f, err := os.OpenFile(config.Log.Path, os.O_APPEND|os.O_CREATE, 0644); err != nil {
+			log.Error(err)
+		} else {
+			log.Debugf("set log path: %s", config.Log.Path)
+			log.SetOutput(f)
+		}
+	}
+
+	if config.Log.Debug {
+		log.SetLevel(log.TraceLevel)
+	}
+
+	log.Tracef("configure is %v", config)
+	var wg sync.WaitGroup
+	wg.Add(len(config.RunnerConfigs))
+
+	for _, config := range config.RunnerConfigs {
+		runner, err := obsync.NewRunner(config)
+		if err != nil {
+			log.Fatal(err) //
+		}
+
+		go func(f *obsync.RunnerConfig) {
+			defer wg.Done()
+			log.Debugf("start running %v", f.Description)
+			if err := runner.Start(context.Background()); err != nil {
+				log.Error(err)
+				return
+			}
+		}(&config)
+	}
+
+	wg.Wait()
 }

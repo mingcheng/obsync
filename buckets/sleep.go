@@ -12,8 +12,7 @@ package buckets
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 
@@ -23,18 +22,6 @@ import (
 // TestBucket is a test buckets
 type TestBucket struct {
 	Config obsync.BucketConfig
-}
-
-// Start called when buckets is started
-func (r *TestBucket) Start(ctx context.Context) error {
-	log.Println("on start")
-	return nil
-}
-
-// Stop OnStop when the buckets uploader is stopped
-func (r *TestBucket) Stop(ctx context.Context) error {
-	log.Println("on stop")
-	return nil
 }
 
 // Info to get the buckets info
@@ -49,7 +36,7 @@ func (r *TestBucket) Exists(ctx context.Context, path string) bool {
 
 // Put to put the file to the buckets
 func (r *TestBucket) Put(ctx context.Context, path, key string) error {
-	logrus.Trace(path, key)
+	log.Debugf("received path [%s] and key [%s]", path, key)
 	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 	return nil
 }
