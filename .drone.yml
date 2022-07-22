@@ -19,7 +19,7 @@ steps:
       GOPROXY: https://goproxy.cn
     commands:
       - make build
-      - ./target/obsync -h
+      - ./obsync -h
 
   - name: publish-to-ghcr
     image: plugins/docker
