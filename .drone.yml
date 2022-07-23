@@ -21,6 +21,15 @@ steps:
       - make build
       - ./obsync -h
 
+
+  - name: run docker-compose for docker build
+    image: docker/compose
+    volumes:
+      - name: docker-sock
+        path: /var/run/docker.sock
+    commands:
+      - docker-compose build
+
   - name: publish-to-ghcr
     image: plugins/docker
     volumes:
