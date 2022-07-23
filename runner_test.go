@@ -44,7 +44,7 @@ func (s sleepClient) Put(ctx context.Context, filePath, key string) error {
 func init() {
 	_ = RegisterBucketClientFunc("sleep", func(config BucketConfig) (BucketClient, error) {
 		return &sleepClient{
-			time.Second,
+			time.Millisecond,
 		}, nil
 	})
 }
@@ -68,7 +68,9 @@ func TestRunner_Start(t *testing.T) {
 
 	assert.NotNil(t, runner)
 
-	numbers, err := runner.TasksByPath(".", nil)
+	numbers, err := runner.TasksByPath(".", nil, &BucketConfig{
+		Type: "sleep",
+	})
 	assert.NoError(t, err)
 
 	i = 0

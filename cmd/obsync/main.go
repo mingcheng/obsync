@@ -65,7 +65,7 @@ func init() {
 
 	// show command line usage information
 	flag.Usage = func() {
-		fmt.Println(logo)
+		log.Println(logo)
 		PrintVersion()
 		flag.PrintDefaults()
 	}

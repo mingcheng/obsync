@@ -16,7 +16,7 @@ build: cmd/obsync
 	@$(GO) build $(GO_FLAGS) -o ${BINARY} $(SRC)
 
 test:
-	@go test -v ./cmd/... ./bucket/...
+	@go test -v .
 
 docker_image:
 	@docker-compose build

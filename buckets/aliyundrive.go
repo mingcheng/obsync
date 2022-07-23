@@ -97,7 +97,7 @@ func init() {
 
 	status := redisClient.Ping(context.Background())
 	if status.Err() != nil {
-		log.Warn("ping redis error: %v", status.Err())
+		log.Warnf("ping redis error: %v", status.Err())
 	}
 
 	_ = obsync.RegisterBucketClientFunc("aliyundrive",
@@ -113,7 +113,7 @@ func init() {
 			}
 
 			if config.Key == "" {
-				return nil, errors.New("refreshToken is empty")
+				return nil, errors.New("refresh token is empty")
 			}
 
 			drive := AliyunDrive{
