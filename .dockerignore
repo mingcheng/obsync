@@ -9,5 +9,4 @@ Thumbs.db
 /obsync.pid
 /go.work*
 /obsync
-/.vscode/*.log
-/*_test.yaml
+*_test.yaml
