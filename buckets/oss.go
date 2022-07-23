@@ -24,14 +24,15 @@ type OSSBucket struct {
 }
 
 func (o *OSSBucket) Put(_ context.Context, localFile, key string) (err error) {
-	var getBucket *oss.Bucket
+	var bucket *oss.Bucket
 
-	getBucket, err = o.GetBucket()
+	bucket, err = o.GetBucket()
 	if err != nil {
 		return
 	}
 
-	if err = getBucket.PutObjectFromFile(key, localFile); err != nil {
+	err = bucket.PutObjectFromFile(key, localFile)
+	if err != nil {
 		return
 	}
 

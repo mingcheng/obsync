@@ -35,8 +35,9 @@ var (
 )
 
 var (
-	configFilePath = flag.String("f", "/etc/obsync.yaml", "specified configuration file path, in yaml format")
-	printVersion   = flag.Bool("v", false, "print version and exit")
+	configFilePath = flag.String("f", "/etc/obsync.yaml",
+		"specified configuration file path, in yaml format")
+	printVersion = flag.Bool("v", false, "print version and exit")
 )
 
 // PrintVersion that prints version and build time

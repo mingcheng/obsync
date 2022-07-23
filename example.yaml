@@ -2,7 +2,7 @@ targets:
   - description: 'very simple and stupid targets, do nothing'
     path: .
     override: true
-    timeout: 1s
+    timeout: 10s
     threads: 1
     buckets:
       - name: test_sleep1
