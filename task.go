@@ -10,12 +10,26 @@
 
 package obsync
 
-import "time"
+import (
+	"context"
+	"fmt"
+)
 
 type Task struct {
-	Local   string
-	Key     string
-	Force   bool
-	SubDir  string
-	Timeout time.Duration
+	FilePath  string
+	Key       string
+	Overrides bool
+	Client    *BucketClient
+}
+
+func (t *Task) Run(ctx context.Context) (err error) {
+	if t.Client == nil {
+		return fmt.Errorf("the client is nil")
+	}
+
+	if (*t.Client).Exists(ctx, t.Key) && !t.Overrides {
+		return fmt.Errorf("%s is already exists", t.Key)
+	}
+
+	return (*t.Client).Put(ctx, t.FilePath, t.Key)
 }

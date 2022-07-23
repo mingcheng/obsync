@@ -1,46 +1,32 @@
 package main
 
 import (
-	"encoding/json"
+	"github.com/mingcheng/obsync"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
-
-	"github.com/mingcheng/obsync/bucket"
 )
 
 type Config struct {
-	// Debug      bool            `json:"debug"`
-	// Standalone bool            `json:"standalone"`
-	// Interval   uint            `json:"interval"`
-	// Force   bool            `json:"force"`
-	Root    string          `json:"root"`
-	Buckets []bucket.Config `json:"buckets"`
+	Log struct {
+		Debug bool   `json:"debug" yaml:"debug"`
+		Path  string `json:"path" yaml:"path"`
+	} `json:"log" yaml:"log"`
+	RunnerConfigs []obsync.RunnerConfig `json:"targets" yaml:"targets"`
 }
 
-func (c *Config) Dump() (config string, err error) {
-	result, err := json.Marshal(c)
-	if err != nil {
-		return "", nil
-	}
-
-	return string(result), nil
-}
-
-func NewConfig(configPath string) (*Config, error) {
-	var (
-		err    error
-		data   []byte
-		config Config
-	)
+func NewConfig(configPath string) (config Config, err error) {
+	var data []byte
 
 	// read config and initial obs client
 	data, err = ioutil.ReadFile(configPath)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	if err = json.Unmarshal(data, &config); err != nil {
-		return nil, err
+	// unmarshal config into initialized objects
+	if err = yaml.Unmarshal(data, &config); err != nil {
+		return
 	}
 
-	return &config, nil
+	return
 }

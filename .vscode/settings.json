@@ -1,7 +1,11 @@
 {
   "go.buildOnSave": "workspace",
-  "workbench.colorTheme": "Monokai",
-  "editor.fontFamily": "Sarasa Fixed SC",
   "editor.fontSize": 14,
-  "debug.console.fontFamily": "default"
+  "debug.console.fontFamily": "default",
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.lineNumbers": "off",
+    "editor.wordWrapColumn": 120,
+    "editor.fontSize": 16
+  }
 }

@@ -1,4 +1,4 @@
-FROM golang:1.17 AS builder
+FROM golang:1.18 AS builder
 LABEL maintainer="mingcheng<mingcheng@outook.com>"
 
 ENV GOPATH /go
@@ -6,7 +6,6 @@ ENV GOROOT /usr/local/go
 ENV PACKAGE github.com/mingcheng/obsync.go
 ENV GOPROXY https://goproxy.cn,direct
 ENV BUILD_DIR ${GOPATH}/src/${PACKAGE}
-ENV TARGET_DIR ${BUILD_DIR}/target
 
 # Print go version
 RUN echo "GOROOT is ${GOROOT}"
@@ -16,10 +15,10 @@ RUN ${GOROOT}/bin/go version
 # Build
 COPY . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
-RUN make clean build && ${TARGET_DIR}/obsync -v && mv ${TARGET_DIR}/obsync /usr/bin/obsync
+RUN make clean build && ./obsync -h && mv ./obsync /bin/obsync
 
 # Stage2
-FROM debian:bullseye
+FROM debian:stable
 
 ENV TZ "Asia/Shanghai"
 RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
@@ -30,7 +29,7 @@ RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.li
 	&& apt -y install ca-certificates openssl tzdata curl dumb-init \
 	&& apt -y autoremove
 
-COPY --from=builder /usr/bin/obsync /bin/obsync
-VOLUME /etc/obsync.json
+COPY --from=builder /bin/obsync /bin/obsync
+VOLUME /etc/obsync.yaml
 
 ENTRYPOINT ["dumb-init", "/bin/obsync"]
