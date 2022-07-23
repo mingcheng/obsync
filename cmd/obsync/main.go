@@ -42,11 +42,11 @@ var (
 
 // PrintVersion that prints version and build time
 func PrintVersion() {
-	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v)\nBuilt on %v %v/%v \n",
+	_, _ = fmt.Fprintf(os.Stderr, "Obsync v%v(%v)\nbuilt on %v %v/%v \n",
 		version, commit, date, runtime.GOARCH, runtime.GOOS)
 
 	supportTypes := obsync.AllSupportedBucketTypes()
-	_, _ = fmt.Fprintf(os.Stderr, "Support bucket types [ %s ]\n\n", strings.Join(supportTypes, ", "))
+	_, _ = fmt.Fprintf(os.Stderr, "supports bucket types [ %s ]\n\n", strings.Join(supportTypes, ", "))
 }
 
 func init() {
