@@ -22,7 +22,7 @@ import (
 
 // TestBucket is a test buckets
 type TestBucket struct {
-	Config obsync.BucketConfig
+	Config *obsync.BucketConfig
 }
 
 // Info to get the buckets info
@@ -46,7 +46,7 @@ func (r *TestBucket) Put(ctx context.Context, path, key string) error {
 func init() {
 	_ = obsync.RegisterBucketClientFunc("sleep", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 		return &TestBucket{
-			Config: config,
+			Config: &config,
 		}, nil
 	})
 }

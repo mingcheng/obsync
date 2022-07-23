@@ -89,19 +89,28 @@ func (t *AliyunDrive) Put(ctx context.Context, localFile, key string) error {
 	return nil
 }
 
-func init() {
-	// instance a redis connection from environment variable
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_ADDR"),
-	})
+var (
+	once        sync.Once
+	redisClient *redis.Client
+)
 
-	status := redisClient.Ping(context.Background())
-	if status.Err() != nil {
-		log.Warnf("ping redis error: %v", status.Err())
-	}
+func init() {
 
 	_ = obsync.RegisterBucketClientFunc("aliyundrive",
 		func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+			once.Do(func() {
+				// instance a redis connection from environment variable
+				// Notice: just running once
+				redisClient = redis.NewClient(&redis.Options{
+					Addr: os.Getenv("REDIS_ADDR"),
+				})
+
+				status := redisClient.Ping(context.Background())
+				if status.Err() != nil {
+					log.Warnf("ping redis error: %v", status.Err())
+				}
+			})
+
 			storage := store.RedisStore{
 				Client: redisClient,
 			}
