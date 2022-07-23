@@ -4,7 +4,4 @@ services:
     build:
       context: .
     image: ghcr.io/mingcheng/obsync
-    volumes:
-      - ./example.yaml:/etc/obsync.yaml:ro
-      - ./data:/data:ro
     restart: on-failure
