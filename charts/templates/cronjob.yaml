@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "obsync.labels" . | nindent 4 }}
 spec:
-  schedule: "* */18 * * *"
+  schedule: "30 4 * * *"
   jobTemplate:
     spec:
       template:
@@ -16,8 +16,8 @@ spec:
               image: ghcr.io/mingcheng/obsync:{{ .Values.image.version | default "latest" }}
               imagePullPolicy:  {{ .Values.image.pullPolicy | default "Always" }}
               env:
-                - name: DEBUG
-                  value: 'true'
+                # - name: DEBUG
+                #   value: 'true'
                 - name: REDIS_ADDR
                   value: {{ .Values.redis.address | default "localhost:6379" }}
               volumeMounts:
@@ -31,10 +31,8 @@ spec:
                 - name: gitea-archives
                   mountPath: /gitea
                   readOnly: true
-
-          restartPolicy: OnFailure
+          restartPolicy: Never
           volumes:
-
             - name: gitea-archives
               nfs:
                 server: {{ .Values.backup.server }}
