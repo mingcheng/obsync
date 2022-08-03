@@ -14,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.35
 	github.com/upyun/go-sdk v2.1.0+incompatible
+	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -37,6 +38,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mozillazg/go-httpheader v0.3.1 // indirect
+	github.com/pengsrc/go-shared v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -47,4 +49,5 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
