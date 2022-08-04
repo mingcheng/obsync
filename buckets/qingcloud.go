@@ -61,6 +61,16 @@ func (r *QingBucket) Put(_ context.Context, path, key string) error {
 	return nil
 }
 
+func (r *QingBucket) Del(_ context.Context, key string) error {
+	result, err := r.bucket.DeleteObject(key)
+	if err != nil {
+		return err
+	}
+
+	log.Tracef("%v", result)
+	return nil
+}
+
 // NewQingClient to instance a new client for qingcloud object-storage service
 func NewQingClient(config obsync.BucketConfig) (*QingBucket, error) {
 	configuration, err := qingConfig.New(config.Key, config.Secret)
@@ -90,10 +100,24 @@ func NewQingClient(config obsync.BucketConfig) (*QingBucket, error) {
 		return nil, err
 	}
 
-	return &QingBucket{
+	client := &QingBucket{
 		bucket: bucket,
 		Config: &config,
-	}, nil
+	}
+
+	info, err := client.Info(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	// fetch the information from the bucket
+	result, ok := info.(*qingService.GetBucketStatisticsOutput)
+	if !ok {
+		return nil, errors.New("invalid information from bucket")
+	}
+	log.Tracef("%v", result)
+
+	return client, nil
 }
 
 // init function to initialize and register the buckets
