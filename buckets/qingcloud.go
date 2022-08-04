@@ -297,7 +297,7 @@ func NewQingClient(config obsync.BucketConfig) (*QingBucket, error) {
 	if !ok {
 		return nil, errors.New("invalid information from bucket")
 	}
-	log.Tracef("the request bucket %s size is %d", result.Name, result.Size)
+	log.Tracef("the request bucket %s size is %d", qingService.StringValue(result.Name), result.Size)
 
 	return client, nil
 }
