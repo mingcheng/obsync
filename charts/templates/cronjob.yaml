@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "obsync.fullname" . }}-backup
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    {{- include "obsync.labels" . | nindent 4 }}
+spec:
+  schedule: "30 4 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: {{ include "obsync.fullname" . }}-backup
+              image: ghcr.io/mingcheng/obsync:{{ .Values.image.version | default "latest" }}
+              imagePullPolicy:  {{ .Values.image.pullPolicy | default "Always" }}
+              env:
+                # - name: DEBUG
+                #   value: 'true'
+                - name: REDIS_ADDR
+                  value: {{ .Values.redis.address | default "localhost:6379" }}
+              volumeMounts:
+                - name: config
+                  subPath: obsync.yaml
+                  mountPath: /etc/obsync.yaml
+                  readOnly: true
+                - name: syncthing-archives
+                  mountPath: /syncthing
+                  readOnly: true
+                - name: gitea-archives
+                  mountPath: /gitea
+                  readOnly: true
+          restartPolicy: Never
+          volumes:
+            - name: gitea-archives
+              nfs:
+                server: {{ .Values.backup.server }}
+                path: /archives/gitea
+            - name: syncthing-archives
+              nfs:
+                server: {{ .Values.backup.server }}
+                path: /archives/syncthing
+            - name: config
+              configMap:
+                name: obsync-config

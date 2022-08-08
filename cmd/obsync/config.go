@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/mingcheng/obsync"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
+	"os"
 )
 
+// Config is the main configuration struct for program
 type Config struct {
 	Log struct {
 		Debug bool   `json:"debug" yaml:"debug"`
@@ -14,11 +15,12 @@ type Config struct {
 	RunnerConfigs []obsync.RunnerConfig `json:"targets" yaml:"targets"`
 }
 
+// NewConfig to create a new configuration form specified file path
 func NewConfig(configPath string) (config Config, err error) {
 	var data []byte
 
 	// read config and initial obs client
-	data, err = ioutil.ReadFile(configPath)
+	data, err = os.ReadFile(configPath)
 	if err != nil {
 		return
 	}

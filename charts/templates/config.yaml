@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: obsync-config
+  namespace: {{ .Values.namespace | default "default" }}
+data:
+  obsync.yaml: |-
+    log:
+      debug: true
+
+    targets:
+      - description: 'upload gitea files to aliyun drive'
+        path: /gitea
+        overrides: false
+        timeout: 30m
+        threads: 10
+        exclude:
+          - "Thumb*.db"
+          - ".DS_*"
+          - "*_test.yaml"
+          - "go.work*"
+        buckets:
+          - type: aliyundrive
+            key: ''
+            subdir: gitea
+
+      - description: 'upload syncthing backups'
+        path: /syncthing
+        overrides: false
+        timeout: 1h
+        threads: 10
+        exclude:
+          - "Thumb*.db"
+          - ".DS_*"
+          - "*_test.yaml"
+          - "go.work*"
+        buckets:
+          - type: aliyundrive
+            key: ''
+            subdir: syncthing

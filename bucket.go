@@ -25,12 +25,14 @@ type BucketConfig struct {
 	SubDir   string `json:"subdir" yaml:"subdir"`
 }
 
+// BucketClient is a client for obsync bucket client interface.
 type BucketClient interface {
 	Info(context.Context) (interface{}, error)
 	Exists(context.Context, string) bool
 	Put(cxt context.Context, filePath, key string) error
 }
 
+// to store the client callback functions and instance variables
 type (
 	NewBucketClient  func(config BucketConfig) (BucketClient, error)
 	NewBucketClients map[string]NewBucketClient
@@ -43,7 +45,7 @@ var (
 
 // AllSupportedBucketTypes to get all the registered buckets types.
 func AllSupportedBucketTypes() (types []string) {
-	for k, _ := range newBucketClients {
+	for k := range newBucketClients {
 		types = append(types, k)
 	}
 
