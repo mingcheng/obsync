@@ -14,13 +14,12 @@ name: build_and_run_on_docker
 
 steps:
   - name: build
-    image: golang:1.18
+    image: golang:1.19
     environment:
       GOPROXY: https://goproxy.cn
     commands:
       - make build
       - ./obsync -h
-
 
   - name: run docker-compose for docker build
     image: docker/compose
@@ -52,7 +51,7 @@ steps:
       dockerfile: Dockerfile
       tags:
         - latest
-        - 1.4.0
+        - 1.5.0
 
 volumes:
   - name: docker-sock
