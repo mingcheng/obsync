@@ -23,6 +23,7 @@ type BucketConfig struct {
 	Secret   string `json:"secret" yaml:"secret"`
 	EndPoint string `json:"endpoint" yaml:"endpoint"`
 	SubDir   string `json:"subdir" yaml:"subdir"`
+	Region   string `json:"region" yaml:"region"`
 }
 
 // BucketClient is a client for obsync bucket client interface.

@@ -12,38 +12,70 @@ package buckets
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	credentials2 "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/mingcheng/obsync"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
+	"os"
 )
 
-// S3Bucket is a test buckets
+// MinioBucket is a test buckets
 type S3Bucket struct {
 	Config *obsync.BucketConfig
-	Client *minio.Client
+	Client *s3.S3
 }
 
 // Info to get the buckets info
 func (r *S3Bucket) Info(ctx context.Context) (interface{}, error) {
-	return r.Client.GetBucketPolicy(context.Background(), r.Config.Name)
+	return r.Client.GetBucketPolicy(&s3.GetBucketPolicyInput{
+		Bucket: aws.String(r.Config.Name),
+	})
 }
 
 // Exists to check if the file exists
 func (r *S3Bucket) Exists(ctx context.Context, path string) bool {
-	_, err := r.Client.GetObject(ctx, r.Config.Name, path, minio.GetObjectOptions{})
-	return err != nil
+	obj, err := r.Client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(r.Config.Name),
+		Key:    aws.String(path),
+	})
+
+	log.Debugf("get object [%s] from buckets [%s] with error [%v]", path, r.Config.Name, err)
+	log.Debugf("object [%v]", obj)
+	if err != nil || obj == nil {
+		return false
+	}
+
+	return true
 }
 
 // Put to put the file to the buckets
 func (r *S3Bucket) Put(ctx context.Context, localPath, key string) error {
-	info, err := r.Client.FPutObject(ctx, r.Config.Name, key, localPath, minio.PutObjectOptions{})
+
+	f, err := os.Open(localPath)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
+	defer f.Close()
 
-	log.Tracef("put to buckets [%s] within key [%s] is finished", r.Config.Name, info.Key)
+	result, err := r.Client.PutObjectWithContext(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(r.Config.Name),
+		Key:    aws.String(key),
+		Body:   aws.ReadSeekCloser(f),
+	})
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	log.Debugf("put object [%s] to buckets [%s] with result [%v]", key, r.Config.Name, result)
+
+	if !r.Exists(ctx, key) {
+		return fmt.Errorf("put object [%s] to buckets [%s] failed", key, r.Config.Name)
+	}
+
 	return nil
 }
 
@@ -52,9 +84,8 @@ func init() {
 	log.Tracef("register buckets with type name is s3")
 	_ = obsync.RegisterBucketClientFunc("s3", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 
-		minioClient, err := minio.New(config.EndPoint, &minio.Options{
-			Creds:  credentials.NewStaticV4(config.Key, config.Secret, ""),
-			Secure: false,
+		sess, err := session.NewSession(&aws.Config{
+			Credentials: credentials2.NewStaticCredentials(config.Key, config.Secret, ""),
 		})
 
 		if err != nil {
@@ -62,15 +93,27 @@ func init() {
 			return nil, err
 		}
 
-		found, err := minioClient.BucketExists(context.Background(), config.Name)
-		if err != nil || !found {
+		c := aws.NewConfig().WithEndpoint(config.EndPoint)
+		if config.Region != "" {
+			c.Region = aws.String(config.Region)
+		} else {
+			c.Region = aws.String("auto")
+		}
+		log.Debugf("region is [%s]", *c.Region)
+
+		svc := s3.New(sess, c)
+		_, err = svc.ListObjects(&s3.ListObjectsInput{
+			Bucket: aws.String(config.Name),
+		})
+
+		if err != nil {
 			log.Error(err)
 			return nil, err
 		}
 
 		return &S3Bucket{
 			Config: &config,
-			Client: minioClient,
+			Client: svc,
 		}, nil
 	})
 }
