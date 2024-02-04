@@ -12,9 +12,8 @@ package buckets
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	credentials2 "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/mingcheng/obsync"
@@ -53,7 +52,6 @@ func (r *S3Bucket) Exists(ctx context.Context, path string) bool {
 
 // Put to put the file to the buckets
 func (r *S3Bucket) Put(ctx context.Context, localPath, key string) error {
-
 	f, err := os.Open(localPath)
 	if err != nil {
 		log.Error(err)
@@ -70,12 +68,21 @@ func (r *S3Bucket) Put(ctx context.Context, localPath, key string) error {
 		log.Error(err)
 		return err
 	}
-	log.Debugf("put object [%s] to buckets [%s] with result [%v]", key, r.Config.Name, result)
 
+	// check upload results
 	if !r.Exists(ctx, key) {
-		return fmt.Errorf("put object [%s] to buckets [%s] failed", key, r.Config.Name)
+		log.Errorf("put object [%s] to buckets [%s] failed", key, r.Config.Name)
+		_, err = r.Client.DeleteObject(&s3.DeleteObjectInput{
+			Bucket: aws.String(r.Config.Name),
+			Key:    aws.String(key),
+		})
+
+		if err != nil {
+			log.Errorf("delete uploaded object [%s] with an error %s", key, err)
+		}
 	}
 
+	log.Debugf("put object [%s] to buckets [%s] with result [%v]", key, r.Config.Name, result)
 	return nil
 }
 
@@ -85,7 +92,7 @@ func init() {
 	_ = obsync.RegisterBucketClientFunc("s3", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
 
 		sess, err := session.NewSession(&aws.Config{
-			Credentials: credentials2.NewStaticCredentials(config.Key, config.Secret, ""),
+			Credentials: credentials.NewStaticCredentials(config.Key, config.Secret, ""),
 		})
 
 		if err != nil {
