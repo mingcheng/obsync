@@ -89,7 +89,7 @@ func (r *S3Bucket) Put(ctx context.Context, localPath, key string) error {
 // init function to initialize and register the buckets
 func init() {
 	log.Tracef("register buckets with type name is s3")
-	_ = obsync.RegisterBucketClientFunc("s3", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.AddBucketSyncFunc("s3", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 
 		sess, err := session.NewSession(&aws.Config{
 			Credentials: credentials.NewStaticCredentials(config.Key, config.Secret, ""),

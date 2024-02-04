@@ -95,7 +95,7 @@ func (t QiNiuBucket) UploadToken(key string) string {
 
 func init() {
 	log.Trace("register bucket client callback which type `qiniu`")
-	obsync.RegisterBucketClientFunc("qiniu", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	obsync.AddBucketSyncFunc("qiniu", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		return QiNiuBucket{
 			Config: &config,
 			Mac:    qbox.NewMac(config.Key, config.Secret),

@@ -26,8 +26,8 @@ type BucketConfig struct {
 	Region   string `json:"region" yaml:"region"`
 }
 
-// BucketClient is a client for obsync bucket client interface.
-type BucketClient interface {
+// BucketSync is a client for obsync bucket client interface.
+type BucketSync interface {
 	Info(context.Context) (interface{}, error)
 	Exists(context.Context, string) bool
 	Put(cxt context.Context, filePath, key string) error
@@ -35,52 +35,52 @@ type BucketClient interface {
 
 // to store the client callback functions and instance variables
 type (
-	NewBucketClient  func(config BucketConfig) (BucketClient, error)
-	NewBucketClients map[string]NewBucketClient
+	BucketSyncFunc  func(config BucketConfig) (BucketSync, error)
+	BucketSyncFuncs map[string]BucketSyncFunc
 )
 
 var (
-	newBucketClients  = make(NewBucketClients)
-	addClientFuncLock sync.Mutex
+	bucketSyncFuncsChan = make(BucketSyncFuncs)
+	addClientFuncLock   sync.Mutex
 )
 
 // AllSupportedBucketTypes to get all the registered buckets types.
 func AllSupportedBucketTypes() (types []string) {
-	for k := range newBucketClients {
+	for k := range bucketSyncFuncsChan {
 		types = append(types, k)
 	}
 
 	return types
 }
 
-// RegisterBucketClientFunc to register new type of bucket client
-func RegisterBucketClientFunc(typeName string, newClientFunc NewBucketClient) (err error) {
+// AddBucketSyncFunc to register new type of bucket client
+func AddBucketSyncFunc(typeName string, newClientFunc BucketSyncFunc) (err error) {
 	addClientFuncLock.Lock()
 	defer addClientFuncLock.Unlock()
 
-	if _, ok := newBucketClients[typeName]; ok {
+	if _, ok := bucketSyncFuncsChan[typeName]; ok {
 		return fmt.Errorf("bucket type name is %s already exists", typeName)
 	}
 
-	newBucketClients[typeName] = newClientFunc
+	bucketSyncFuncsChan[typeName] = newClientFunc
 	return
 }
 
-// RemoveBucketClientFunc to unregister newBucketClients from local maps
-func RemoveBucketClientFunc(typeName string) error {
+// RemoveBucketSyncFunc to unregister bucketSyncFuncsChan from local maps
+func RemoveBucketSyncFunc(typeName string) error {
 	addClientFuncLock.Lock()
 	defer addClientFuncLock.Unlock()
 
-	if len(typeName) <= 0 || newBucketClients[typeName] == nil {
+	if len(typeName) <= 0 || bucketSyncFuncsChan[typeName] == nil {
 		return fmt.Errorf("bucket type name %s does not exists", typeName)
 	}
-	delete(newBucketClients, typeName)
+	delete(bucketSyncFuncsChan, typeName)
 	return nil
 }
 
-// NewBucketClientFunc provide a callback function for creating new buckets function
-func NewBucketClientFunc(typeName string) (NewBucketClient, error) {
-	callback, ok := newBucketClients[typeName]
+// GetBucketSyncFunc provide a callback function for creating new buckets function
+func GetBucketSyncFunc(typeName string) (BucketSyncFunc, error) {
+	callback, ok := bucketSyncFuncsChan[typeName]
 	if !ok {
 		return nil, fmt.Errorf("bucket type name %s does not exists", typeName)
 	}

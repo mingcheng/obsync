@@ -44,7 +44,7 @@ func (r *TestBucket) Put(ctx context.Context, path, key string) error {
 
 // init function to initialize and register the buckets
 func init() {
-	_ = obsync.RegisterBucketClientFunc("sleep", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.AddBucketSyncFunc("sleep", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		return &TestBucket{
 			Config: &config,
 		}, nil

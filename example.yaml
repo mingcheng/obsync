@@ -1,9 +1,11 @@
+log:
+  debug: true
 targets:
   - description: 'very simple and stupid targets, do nothing'
     path: .
     override: true
     timeout: 10s
-    threads: 1
+    threads: 100
     buckets:
       - name: test_sleep1
         type: sleep

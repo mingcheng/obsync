@@ -19,7 +19,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync"
 	//"github.com/judwhite/go-svc"
 )
 
@@ -100,24 +99,17 @@ func main() {
 	}
 
 	log.Tracef("configure is %v", config)
-	var wg sync.WaitGroup
-	wg.Add(len(config.RunnerConfigs))
 
-	for _, config := range config.RunnerConfigs {
-		runner, err := obsync.NewRunner(config)
+	for _, c := range config.RunnerConfigs {
+		runner, err := obsync.NewRunner(c)
 		if err != nil {
-			log.Fatal(err) //
+			log.Fatal(err)
 		}
 
-		go func(f *obsync.RunnerConfig) {
-			defer wg.Done()
-			log.Debugf("start running %v", f.Description)
-			if err := runner.Start(context.Background()); err != nil {
-				log.Error(err)
-				return
-			}
-		}(&config)
+		log.Debugf("start running %v", c.Description)
+		if err := runner.SyncDir(context.Background(), c.LocalPath); err != nil {
+			log.Error(err)
+			return
+		}
 	}
-
-	wg.Wait()
 }

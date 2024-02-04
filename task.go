@@ -19,10 +19,10 @@ type Task struct {
 	FilePath  string
 	Key       string
 	Overrides bool
-	Client    *BucketClient
+	Client    *BucketSync
 }
 
-func (t *Task) Run(ctx context.Context) (err error) {
+func (t *Task) Put(ctx context.Context) (err error) {
 	if t.Client == nil {
 		return fmt.Errorf("the client is nil")
 	}
@@ -32,4 +32,25 @@ func (t *Task) Run(ctx context.Context) (err error) {
 	}
 
 	return (*t.Client).Put(ctx, t.FilePath, t.Key)
+}
+
+func NewTask(key, path string, overrides bool, config BucketConfig) (task *Task, err error) {
+	fn, err := GetBucketSyncFunc(config.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := fn(config)
+	if err != nil {
+		return nil, err
+	}
+
+	task = &Task{
+		Key:       key,
+		FilePath:  path,
+		Overrides: overrides,
+		Client:    &client,
+	}
+
+	return task, nil
 }

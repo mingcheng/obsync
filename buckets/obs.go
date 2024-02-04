@@ -74,7 +74,7 @@ func (o *OBSBucket) Info(_ context.Context) (interface{}, error) {
 }
 
 func init() {
-	obsync.RegisterBucketClientFunc("obs", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	obsync.AddBucketSyncFunc("obs", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		client, err := obs.New(config.Key, config.Secret, config.EndPoint)
 		if err != nil {
 			return nil, err

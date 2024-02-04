@@ -3,13 +3,13 @@ module github.com/mingcheng/obsync
 go 1.21
 
 require (
-	github.com/Jeffail/tunny v0.1.4
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/aws/aws-sdk-go v1.50.10
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.23.12+incompatible
 	github.com/mingcheng/aliyundrive v1.0.1
 	github.com/minio/minio-go/v7 v7.0.66
+	github.com/panjf2000/ants/v2 v2.9.0
 	github.com/qiniu/go-sdk/v7 v7.19.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4

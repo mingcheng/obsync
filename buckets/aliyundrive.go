@@ -96,8 +96,8 @@ var (
 
 func init() {
 
-	_ = obsync.RegisterBucketClientFunc("aliyundrive",
-		func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.AddBucketSyncFunc("aliyundrive",
+		func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 			once.Do(func() {
 				// instance a redis connection from environment variable
 				// Notice: just running once

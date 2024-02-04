@@ -304,7 +304,7 @@ func NewQingClient(config obsync.BucketConfig) (*QingBucket, error) {
 
 // init function to initialize and register the buckets
 func init() {
-	_ = obsync.RegisterBucketClientFunc("qingcloud", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.AddBucketSyncFunc("qingcloud", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		return NewQingClient(config)
 	})
 }

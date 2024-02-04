@@ -42,7 +42,7 @@ func (s sleepClient) Put(ctx context.Context, filePath, key string) error {
 }
 
 func init() {
-	_ = RegisterBucketClientFunc("sleep", func(config BucketConfig) (BucketClient, error) {
+	_ = AddBucketSyncFunc("sleep", func(config BucketConfig) (BucketSync, error) {
 		return &sleepClient{
 			time.Millisecond,
 		}, nil
@@ -68,15 +68,29 @@ func TestRunner_Start(t *testing.T) {
 
 	assert.NotNil(t, runner)
 
-	numbers, err := runner.TasksByPath(".", nil, &BucketConfig{
-		Type: "sleep",
-	})
+	err = runner.SyncDir(context.Background(), ".")
 	assert.NoError(t, err)
+}
 
-	i = 0
-	err = runner.Start(context.Background())
+func TestRunner_Watch(t *testing.T) {
+	runner, err := NewRunner(RunnerConfig{
+		LocalPath: ".",
+		Threads:   10,
+		Timeout:   time.Second * 2,
+		BucketConfigs: []BucketConfig{
+			{
+				Type: "sleep",
+				Name: "sleep0",
+			},
+			{
+				Type: "sleep",
+				Name: "sleep1",
+			},
+		},
+	})
+
+	assert.NotNil(t, runner)
 	assert.NoError(t, err)
-	assert.EqualValues(t, i, len(numbers)*2)
 }
 
 func TestNewRunner(t *testing.T) {

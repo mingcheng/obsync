@@ -53,7 +53,7 @@ func (t UpyunBucket) Put(ctx context.Context, filePath, key string) (err error) 
 }
 
 func init() {
-	_ = obsync.RegisterBucketClientFunc("upyun", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	_ = obsync.AddBucketSyncFunc("upyun", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		client := upyun.NewUpYun(&upyun.UpYunConfig{
 			Bucket:   config.Name,
 			Operator: config.Key,

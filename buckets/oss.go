@@ -75,7 +75,7 @@ func (o *OSSBucket) GetBucket() (*oss.Bucket, error) {
 }
 
 func init() {
-	obsync.RegisterBucketClientFunc("oss", func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	obsync.AddBucketSyncFunc("oss", func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		client, err := oss.New(config.EndPoint, config.Key, config.Secret)
 		if err != nil {
 			return nil, err

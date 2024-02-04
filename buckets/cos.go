@@ -81,7 +81,7 @@ func (t COSBucket) Put(ctx context.Context, localFile, key string) error {
 func init() {
 	const Name = "cos"
 	log.Tracef("start register bucket client which type is %s", Name)
-	obsync.RegisterBucketClientFunc(Name, func(config obsync.BucketConfig) (obsync.BucketClient, error) {
+	obsync.AddBucketSyncFunc(Name, func(config obsync.BucketConfig) (obsync.BucketSync, error) {
 		u, _ := url.Parse(config.EndPoint)
 		b := &cos.BaseURL{BucketURL: u}
 		c := cos.NewClient(b, &http.Client{

@@ -10,7 +10,7 @@ package obsync
 //		t.Error(err)
 //	}
 //
-//	_ = RemoveBucketClientFunc(name)
+//	_ = RemoveBucketSyncFunc(name)
 //
 //	if callback, err := Func(name); callback != nil {
 //		t.Errorf("not cleaned, %v", err)

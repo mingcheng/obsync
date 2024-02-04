@@ -3,9 +3,12 @@ package obsync
 import (
 	"context"
 	"fmt"
-	"github.com/Jeffail/tunny"
+	"github.com/panjf2000/ants/v2"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -23,86 +26,96 @@ type RunnerConfig struct {
 
 // Runner supported synchronous local files to specified bucket
 type Runner struct {
-	taskPool map[int]*tunny.Pool
-	config   *RunnerConfig
+	config *RunnerConfig
+	pool   *ants.Pool
 }
 
-// Start the runner with specified configurationF
-func (r *Runner) Start(ctx context.Context) (err error) {
-	threads := int(r.config.Threads)
-	if threads <= 0 {
-		return fmt.Errorf("threads must be greater than 0")
+func (r *Runner) SyncDir(ctx context.Context, dir string) (err error) {
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		log.Error(err)
+		return
 	}
 
-	var wg sync.WaitGroup
-
-	for index, config := range r.config.BucketConfigs {
-		clientFunc, err := NewBucketClientFunc(config.Type)
-		if err != nil {
-			log.Errorf("bucket which name is not supported: %v", err)
-			continue
+	err = filepath.Walk(dir, func(localPath string, info os.FileInfo, err error) error {
+		// @TODO: handle
+		// skip directories and dot prefix files
+		if prefixPath(localPath) {
+			return nil
 		}
 
-		client, err := clientFunc(config)
-		if err != nil {
-			log.Errorf("new bucket client failed: %v", err)
-			continue
-		}
-
-		tasks, err := r.TasksByPath(r.config.LocalPath, &client, &config)
-		if err != nil {
-			log.Errorf("get task failed: %v", err)
-			continue
-		}
-		wg.Add(len(tasks))
-
-		log.Tracef("instance threads pool size: %d", threads)
-		pool := tunny.NewCallback(threads)
-
-		for _, t := range tasks {
-			go func(task *Task) {
-				defer wg.Done()
-
-				log.Tracef("bucket [%s] local path: [%s], remote key: [%s]",
-					config.Name, task.FilePath, task.Key)
-
-				if _, err := pool.ProcessCtx(ctx, func() {
-					// fork the new timeout context for running tasks
-					taskCtx, cancel := context.WithTimeout(ctx, r.config.Timeout)
-					defer cancel()
-
-					// start running tasks within the specified context
-					if err := task.Run(taskCtx); err != nil {
-						log.Error(err)
-					}
-				}); err != nil {
-					log.Error(err)
+		if !info.IsDir() {
+			// exclude files by specified configuration
+			for _, exclude := range r.config.Exclude {
+				if found, _ := path.Match(exclude, filepath.Base(localPath)); found {
+					log.Warnf("found exclude %s in %s", exclude, localPath)
+					return nil
 				}
-			}(t)
+			}
+
+			pathKey := strings.Replace(localPath, dir, "", 1)
+			key := pathKey[1:]
+
+			log.Debugf("local path is %s, and key is %s", localPath, key)
+
+			err = r.InvokeAll(ctx, key, localPath)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 
-		r.taskPool[index] = pool
+		return err
+	})
+
+	return err
+}
+
+func (r *Runner) InvokeAll(ctx context.Context, key, local string) (err error) {
+	var wg sync.WaitGroup
+	for _, c := range r.config.BucketConfigs {
+		wg.Add(1)
+		err = r.pool.Submit(func() {
+			err = r.Invoke(ctx, key, local, c)
+			if err != nil {
+				log.Error(err)
+			}
+			defer wg.Done()
+		})
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	wg.Wait()
 	return err
 }
 
-// Stop the running and closing threads pool
-func (r *Runner) Stop() (err error) {
-	for name, pool := range r.taskPool {
-		if pool == nil {
-			log.Debugf("closing task pool %v", name)
-			pool.Close()
-		}
+func (r *Runner) Invoke(ctx context.Context, key, local string, c BucketConfig) (err error) {
+	if c.SubDir != "" {
+		key = fmt.Sprintf("%s%c%s", c.SubDir, os.PathSeparator, key)
+	}
+
+	task, err := NewTask(key, local, r.config.Overrides, c)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return task.Put(ctx)
+}
+
+func (r *Runner) Stop() error {
+	if !r.pool.IsClosed() {
+		r.pool.Release()
 	}
 	return nil
 }
 
 // NewRunner to instance a new runner with specified configuration
 // notice: 	1. the bucket type must be registered
-//					2. the local directory must readable
-// 					3. the threads must be greater than zero
+//  2. the local directory must readable
+//  3. the threads must be greater than zero
 func NewRunner(config RunnerConfig) (*Runner, error) {
 	stat, err := os.Stat(config.LocalPath)
 	if err != nil || !stat.IsDir() {
@@ -115,14 +128,19 @@ func NewRunner(config RunnerConfig) (*Runner, error) {
 
 	// check if the bucket type is supported
 	for _, bucketConfig := range config.BucketConfigs {
-		_, err = NewBucketClientFunc(bucketConfig.Type)
+		_, err := GetBucketSyncFunc(bucketConfig.Type)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	pool, err := ants.NewPool(int(config.Threads))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Runner{
-		taskPool: map[int]*tunny.Pool{},
-		config:   &config,
+		pool:   pool,
+		config: &config,
 	}, nil
 }
