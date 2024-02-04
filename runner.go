@@ -56,19 +56,17 @@ func (r *Runner) SyncDir(ctx context.Context, dir string) (err error) {
 			pathKey := strings.Replace(localPath, dir, "", 1)
 			key := pathKey[1:]
 
-			log.Debugf("local path is %s, and key is %s", localPath, key)
-
+			log.Infof("local path is %s, and key is %s", localPath, key)
 			err = r.InvokeAll(ctx, key, localPath)
 			if err != nil {
 				log.Error(err)
-				return err
 			}
 		}
 
-		return err
+		return nil
 	})
 
-	return err
+	return nil
 }
 
 func (r *Runner) InvokeAll(ctx context.Context, key, local string) (err error) {
@@ -80,7 +78,7 @@ func (r *Runner) InvokeAll(ctx context.Context, key, local string) (err error) {
 			if err != nil {
 				log.Error(err)
 			}
-			defer wg.Done()
+			wg.Done()
 		})
 		if err != nil {
 			log.Error(err)
@@ -96,6 +94,7 @@ func (r *Runner) Invoke(ctx context.Context, key, local string, c BucketConfig) 
 		key = fmt.Sprintf("%s%c%s", c.SubDir, os.PathSeparator, key)
 	}
 
+	log.Debugf("new task key is %s, and local path is %s", key, local)
 	task, err := NewTask(key, local, r.config.Overrides, c)
 	if err != nil {
 		log.Error(err)
